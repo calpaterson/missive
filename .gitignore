@@ -1,0 +1,4 @@
+.mypy_cache/
+.tox/
+missive.egg-info/
+__pycache__

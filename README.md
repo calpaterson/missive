@@ -14,5 +14,5 @@ def hello_world(message: Message) -> None:
     message.ack()
 
 if __name__ == "__main__":
-    processor.run(adapter=missive.adapters.Stdin())
+    processor.run(adapter=missive.adapters.StdinAdapter())
 ```
