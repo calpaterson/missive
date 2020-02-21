@@ -6,7 +6,7 @@ best explained with some sample code:
 ```python
 import missive
 
-processor = missive.Missive()
+processor = missive.Processor()
 
 @processor.handler([])
 def hello_world(message: Message) -> None:

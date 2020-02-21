@@ -11,6 +11,12 @@ setup(
     install_requires=[],
     extras_require={
         "tests": ["pytest~=5.3.1",],
-        "dev": ["wheel~=0.33.6", "black~=19.10b0", "mypy~=0.750", "bpython~=0.18",],
+        "dev": [
+            "wheel~=0.33.6",
+            "black~=19.10b0",
+            "mypy~=0.750",
+            "bpython~=0.18",
+            "flake8==3.7.9",
+        ],
     },
 )
