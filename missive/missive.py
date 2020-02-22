@@ -1,5 +1,5 @@
 import abc
-from dataclasses import dataclass
+import sys
 from logging import getLogger
 from typing import Callable, MutableMapping, Tuple
 
@@ -7,34 +7,59 @@ logger = getLogger("missive")
 
 
 class Message(metaclass=abc.ABCMeta):
+    def __init__(self, data: bytes = b"") -> None:
+        self.data = data
+
     @abc.abstractmethod
-    def ack(self):
+    def ack(self) -> None:
         ...
 
     @abc.abstractmethod
-    def nack(self):
+    def nack(self) -> None:
         ...
+
+    def __repr__(self) -> str:
+        return "<%s (%r)>" % (self.__class__.__name__, self.data)
+
+    def __str__(self) -> str:
+        return repr(self)
+
+
+class GenericMessage(Message):
+    def ack(self) -> None:
+        logger.info("acked: %s", self)
+
+    def nack(self) -> None:
+        logger.info("nacked: %s", self)
 
 
 class TestMessage(Message):
-    def __init__(self):
+    def __init__(self) -> None:
         super()
         self.acked = False
         self.nacked = False
 
-    def ack(self):
+    def ack(self) -> None:
         self.acked = True
 
-    def nack(self):
+    def nack(self) -> None:
         self.nacked = True
 
 
-class Adapter:
-    ...
+class Adapter(metaclass=abc.ABCMeta):
+    @abc.abstractmethod
+    def __init__(self, processor: "Processor"):
+        ...
 
 
 class StdinAdapter(Adapter):
-    ...
+    def __init__(self, processor: "Processor"):
+        self.processor = processor
+
+    def run(self) -> None:
+        for line in sys.stdin:
+            data = line.rstrip().encode("utf-8")
+            self.processor.handle(GenericMessage(data))
 
 
 class TestClient:
@@ -51,11 +76,11 @@ Handler = Callable[[Message], None]
 
 
 class Processor:
-    def __init__(self):
+    def __init__(self) -> None:
         self.handlers: MutableMapping[Tuple[Matcher], Handler] = {}
 
-    def handle_for(self, matchers: Tuple[Matcher]) -> Callable:
-        def wrapper(fn) -> None:
+    def handle_for(self, matchers: Tuple[Matcher]) -> Callable[[Handler], None]:
+        def wrapper(fn: Handler) -> None:
             self.handlers[matchers] = fn
 
         return wrapper
@@ -75,6 +100,3 @@ class Processor:
 
     def test_client(self) -> TestClient:
         return TestClient(self)
-
-    def run(self, adapter: Adapter):
-        ...
