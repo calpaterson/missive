@@ -26,7 +26,7 @@ class Message(metaclass=abc.ABCMeta):
 
 class TestMessage(Message):
     def __init__(self) -> None:
-        super()
+        super().__init__()
         self.acked = False
         self.nacked = False
 
@@ -73,17 +73,25 @@ class Processor:
         return wrapper
 
     def handle(self, message: Message) -> None:
-        handled = False
+        matching_handlers = []
         for matchers, handler in self.handlers.items():
             if all(matcher(message) for matcher in matchers):
-                handler(message)
-                handled = True
+                matching_handlers.append(handler)
 
-        if not handled:
+        if len(matching_handlers) == 0:
             logger.critical(
                 "no matching handlers and no dlq configured, crashing on %s", message
             )
             raise RuntimeError("no matching handler")
+
+        if len(matching_handlers) > 1:
+            logger.critical(
+                "multiple matching handlers and no dlq configured, crashing on %s",
+                message,
+            )
+            raise RuntimeError("multiple matching handlers")
+
+        handler(message)
 
     def test_client(self) -> TestClient:
         return TestClient(self)
