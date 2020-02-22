@@ -1,5 +1,4 @@
 import abc
-import sys
 from logging import getLogger
 from typing import Callable, MutableMapping, Tuple
 
@@ -25,14 +24,6 @@ class Message(metaclass=abc.ABCMeta):
         return repr(self)
 
 
-class GenericMessage(Message):
-    def ack(self) -> None:
-        logger.info("acked: %s", self)
-
-    def nack(self) -> None:
-        logger.info("nacked: %s", self)
-
-
 class TestMessage(Message):
     def __init__(self) -> None:
         super()
@@ -52,22 +43,18 @@ class Adapter(metaclass=abc.ABCMeta):
         ...
 
 
-class StdinAdapter(Adapter):
-    def __init__(self, processor: "Processor"):
-        self.processor = processor
-
-    def run(self) -> None:
-        for line in sys.stdin:
-            data = line.rstrip().encode("utf-8")
-            self.processor.handle(GenericMessage(data))
-
-
 class TestClient:
     def __init__(self, processor: "Processor"):
         self.processor = processor
 
     def send(self, message: TestMessage) -> None:
         self.processor.handle(message)
+
+
+class DLQ(metaclass=abc.ABCMeta):
+    @abc.abstractmethod
+    def add(self, message: Message) -> None:
+        ...
 
 
 Matcher = Callable[[Message], bool]

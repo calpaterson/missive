@@ -1,4 +1,5 @@
 import missive
+from missive.adapters.stdin import StdinAdapter
 
 processor = missive.Processor()
 
@@ -8,7 +9,7 @@ def print_everything_out(message) -> None:
     print(message)
 
 
-adapted = missive.StdinAdapter(processor)
+adapted = StdinAdapter(processor)
 
 
 if __name__ == "__main__":
