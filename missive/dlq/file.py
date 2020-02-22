@@ -6,8 +6,8 @@ class FileDQL(DLQ):
         self.file_path = file_path
         self.buf = open(file_path, "ba", buffering=0)
 
-    def add(self, message: Message) -> None:
-        output = message.data + b"\n"
+    def add(self, message: Message, reason: str) -> None:
+        output = message.data + b"," + reason.encode("utf-8") + b"\n"
         self.buf.write(output)
 
     def __repr__(self) -> str:

@@ -1,6 +1,6 @@
 import abc
 from logging import getLogger
-from typing import Callable, MutableMapping, Tuple, Sequence, FrozenSet
+from typing import Callable, MutableMapping, Tuple, Sequence, FrozenSet, Optional
 
 logger = getLogger("missive")
 
@@ -53,7 +53,7 @@ class TestClient:
 
 class DLQ(metaclass=abc.ABCMeta):
     @abc.abstractmethod
-    def add(self, message: Message) -> None:
+    def add(self, message: Message, reason: str) -> None:
         ...
 
 
@@ -65,12 +65,16 @@ Handler = Callable[[Message], None]
 class Processor:
     def __init__(self) -> None:
         self.handlers: MutableMapping[FrozenSet[Matcher], Handler] = {}
+        self.dlq: Optional[DLQ] = None
 
     def handle_for(self, matchers: Sequence[Matcher]) -> Callable[[Handler], None]:
         def wrapper(fn: Handler) -> None:
             self.handlers[frozenset(matchers)] = fn
 
         return wrapper
+
+    def set_dlq(self, dlq: DLQ) -> None:
+        self.dlq = dlq
 
     def handle(self, message: Message) -> None:
         matching_handlers = []
@@ -79,12 +83,26 @@ class Processor:
                 matching_handlers.append(handler)
 
         if len(matching_handlers) == 0:
-            logger.critical(
-                "no matching handlers and no dlq configured, crashing on %s", message
-            )
-            raise RuntimeError("no matching handler")
+            reason = "no matching handlers"
+            if self.dlq is not None:
+                logger.warning("no matching handlers for %s", message)
+                self.dlq.add(message, reason)
+                message.ack()
+                return
+            else:
+                logger.critical(
+                    "no matching handlers and no dlq configured, crashing on %s",
+                    message,
+                )
+                raise RuntimeError("no matching handler")
 
         if len(matching_handlers) > 1:
+            reason = "multiple matching handlers"
+            if self.dlq is not None:
+                logger.warning("multiple matching handlers for %s", message)
+                self.dlq.add(message, reason)
+                message.ack()
+                return
             logger.critical(
                 "multiple matching handlers and no dlq configured, crashing on %s",
                 message,
