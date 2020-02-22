@@ -8,7 +8,7 @@ setup(
     packages=find_packages(exclude=["tests.*", "tests"]),
     include_package_data=True,
     zip_safe=True,
-    install_requires=[],
+    install_requires=["flask~=1.1.1",],
     extras_require={
         "tests": ["pytest~=5.3.1", "pytest-cov~=2.8.1"],
         "dev": [
