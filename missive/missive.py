@@ -1,6 +1,6 @@
 import abc
 from logging import getLogger
-from typing import Callable, MutableMapping, Tuple
+from typing import Callable, MutableMapping, Tuple, Sequence, FrozenSet
 
 logger = getLogger("missive")
 
@@ -64,11 +64,11 @@ Handler = Callable[[Message], None]
 
 class Processor:
     def __init__(self) -> None:
-        self.handlers: MutableMapping[Tuple[Matcher], Handler] = {}
+        self.handlers: MutableMapping[FrozenSet[Matcher], Handler] = {}
 
-    def handle_for(self, matchers: Tuple[Matcher]) -> Callable[[Handler], None]:
+    def handle_for(self, matchers: Sequence[Matcher]) -> Callable[[Handler], None]:
         def wrapper(fn: Handler) -> None:
-            self.handlers[matchers] = fn
+            self.handlers[frozenset(matchers)] = fn
 
         return wrapper
 

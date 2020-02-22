@@ -8,7 +8,7 @@ def test_one_matching_handler():
 
     flag = False
 
-    @processor.handle_for((),)
+    @processor.handle_for([])
     def flip_bit(message: m.Message) -> None:
         nonlocal flag
         flag = True
