@@ -9,8 +9,9 @@ import missive
 
 processor = missive.Processor()
 
-@processor.handle_for((),)
+@processor.handle_for([])
 def hello_world(message: Message) -> None:
+    """Print 'Hello, World!' to stdin for each message"""
     print("Hello, World!")
     message.ack()
 
@@ -20,25 +21,27 @@ if __name__ == "__main__":
     adapted_processor.run()
 ```
 
+**Please note this is all alpha level code**
+
 ## Goals, non-goals and planned
 
 Goals:
 
-1. Route messages to the right handlers
+1. Route messages to the right handlers (**DONE**)
 
     Allow for flask-style decorator based routing configuration
 
-2. Pluggable message transports via adapters
+2. Pluggable message transports via adapters (**DONE**)
 
     Support for different message transports (RabbitMQ, Redis, SQS, etc) is
     pluggable and the specific details of the transport are kept out of the
     message handlers.
 
-3. But provide escape hatches when necessary
+3. But provide escape hatches when necessary (**MISSING**)
 
     However, many message transports provide unique features
 
-4. A test client to allow for testing without running the message transport
+4. A test client to allow for testing without running the message transport (**DONE**)
 
     Some message transports (in particular, proprietary ones) cannot be run
     locally.  Even where this is possible it can slow down testing so a test
@@ -46,7 +49,7 @@ Goals:
     running message transport.
 
 5. Facility for "dead letter queues" (DLQs) where problem messages can be
-   stored for later manual review
+   stored for later manual review (**DONE**)
 
    A very common requirement is that "problem" messages (unreadable,
    ambigious, unknown, etc) can be filed away for later manual inspection and
