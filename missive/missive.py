@@ -102,7 +102,9 @@ class Processor:
         if len(matching_handlers) > 1:
             reason = "multiple matching handlers"
             if self.dlq is not None:
-                logger.warning("multiple matching handlers for %s - putting on dlq", message)
+                logger.warning(
+                    "multiple matching handlers for %s - putting on dlq", message
+                )
                 self.dlq.add(message, reason)
                 message.ack()
                 return
