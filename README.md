@@ -10,7 +10,7 @@ import missive
 processor = missive.Processor()
 
 @processor.handle_for([])
-def hello_world(message: Message) -> None:
+def hello_world(message: missive.Message) -> None:
     """Print 'Hello, World!' to stdin for each message"""
     print("Hello, World!")
     message.ack()
