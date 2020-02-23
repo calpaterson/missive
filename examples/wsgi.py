@@ -4,7 +4,7 @@ from missive.adapters.wsgi import WSGIAdapter
 processor = missive.Processor()
 
 
-@processor.handle_for((),)
+@processor.handle_for([])
 def print_everything_out(message) -> None:
     print(message)
 
