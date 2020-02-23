@@ -10,7 +10,6 @@ def is_greeting(message: missive.Message):
 
 @processor.handle_for([is_greeting])
 def match_greetings(message) -> None:
-    print("match_greetings")
     if message.data == b"hello":
         print("hi there")
     if message.data == b"goodbye":
