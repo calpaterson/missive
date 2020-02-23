@@ -80,12 +80,15 @@ class Processor:
         matching_handlers = []
         for matchers, handler in self.handlers.items():
             if all(matcher(message) for matcher in matchers):
+                logger.debug("matched %s for %s", handler, message)
                 matching_handlers.append(handler)
+            else:
+                logger.debug("did not match %s for %s", handler, message)
 
         if len(matching_handlers) == 0:
             reason = "no matching handlers"
             if self.dlq is not None:
-                logger.warning("no matching handlers for %s", message)
+                logger.warning("no matching handlers for %s - putting on dlq", message)
                 self.dlq.add(message, reason)
                 message.ack()
                 return
@@ -99,7 +102,7 @@ class Processor:
         if len(matching_handlers) > 1:
             reason = "multiple matching handlers"
             if self.dlq is not None:
-                logger.warning("multiple matching handlers for %s", message)
+                logger.warning("multiple matching handlers for %s - putting on dlq", message)
                 self.dlq.add(message, reason)
                 message.ack()
                 return
@@ -109,7 +112,9 @@ class Processor:
             )
             raise RuntimeError("multiple matching handlers")
 
-        handler(message)
+        sole_matching_handler = matching_handlers[0]
+        logger.debug("calling %s", sole_matching_handler)
+        sole_matching_handler(message)
 
     def test_client(self) -> TestClient:
         return TestClient(self)

@@ -60,3 +60,28 @@ def test_multiple_matching_handlers():
         test_client.send(blank_message)
 
     assert not blank_message.acked
+
+
+def test_one_matching_handler_among_multiple():
+    processor = m.Processor()
+
+    flag = False
+
+    @processor.handle_for((lambda m: True,))
+    def a_matching_handler(message):
+        nonlocal flag
+        flag = True
+        message.ack()
+
+    @processor.handle_for((lambda m: False,))
+    def another_matching_handler(message):
+        message.ack()
+
+    test_client = processor.test_client()
+
+    blank_message = m.TestMessage()
+
+    test_client.send(blank_message)
+
+    assert flag
+    assert blank_message.acked
