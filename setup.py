@@ -6,6 +6,9 @@ setup(
     name="missive",
     version=VERSION,
     packages=find_packages(exclude=["tests.*", "tests"]),
+    package_data={
+        "missive": ["py.typed"]
+    },
     include_package_data=True,
     zip_safe=True,
     install_requires=["flask~=1.1.1",],
