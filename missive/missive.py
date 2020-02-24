@@ -1,16 +1,14 @@
 import abc
 import uuid
 from logging import getLogger
-import collections.abc
-from datetime import datetime
 from typing import Callable, MutableMapping, Sequence, FrozenSet, Optional, Tuple
 
 logger = getLogger("missive")
 
 
 class Message(metaclass=abc.ABCMeta):
-    def __init__(self, data: bytes = b"") -> None:
-        self.data = data
+    def __init__(self, raw_data: bytes = b"") -> None:
+        self.raw_data = raw_data
         self.message_id = uuid.uuid4().bytes
 
     @abc.abstractmethod
@@ -25,7 +23,7 @@ class Message(metaclass=abc.ABCMeta):
         return "<%s (%r, %r)>" % (
             self.__class__.__name__,
             self.message_id.hex(),
-            self.data[:30],
+            self.raw_data[:30],
         )
 
     def __str__(self) -> str:

@@ -18,4 +18,4 @@ def test_acking():
     with adapted_processor.app.test_client() as test_client:
         test_client.post("/", data=b"hello")
 
-    assert message_received.data == b"hello"
+    assert message_received.raw_data == b"hello"

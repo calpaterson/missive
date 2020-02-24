@@ -14,7 +14,7 @@ def dlq():
 
 @freeze_time("2018-01-03")
 def test_set_and_get(dlq):
-    message = GenericMessage(data="test")
+    message = GenericMessage(raw_data="test")
 
     dlq[message.message_id] = (message, "no reason")
 
@@ -27,7 +27,7 @@ def test_set_and_get(dlq):
 
 @freeze_time("2018-01-03")
 def test_set_and_remove(dlq):
-    message = GenericMessage(data="test")
+    message = GenericMessage(raw_data="test")
 
     dlq[message.message_id] = (message, "no reason")
 
