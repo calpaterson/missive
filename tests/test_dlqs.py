@@ -5,16 +5,8 @@ import pytest
 import missive as m
 
 
-class ListDLQ(m.DLQ):
-    def __init__(self):
-        self.messages: List[Tuple[m.Message, str]] = []
-
-    def add(self, message: m.Message, reason: str):
-        self.messages.append((message, reason))
-
-
 def test_no_dlq_required():
-    dlq = ListDLQ()
+    dlq = {}
 
     processor = m.Processor()
     processor.set_dlq(dlq)
@@ -38,7 +30,7 @@ def test_no_dlq_required():
 
 
 def test_no_matching_handler():
-    dlq = ListDLQ()
+    dlq = {}
 
     processor = m.Processor()
     processor.set_dlq(dlq)
@@ -54,11 +46,11 @@ def test_no_matching_handler():
     test_client.send(blank_message)
 
     assert blank_message.acked
-    assert dlq.messages == [(blank_message, "no matching handlers")]
+    assert list(dlq.values()) == [(blank_message, "no matching handlers")]
 
 
 def test_multiple_matching_handlers():
-    dlq = ListDLQ()
+    dlq = {}
 
     processor = m.Processor()
     processor.set_dlq(dlq)
@@ -78,4 +70,4 @@ def test_multiple_matching_handlers():
     test_client.send(blank_message)
 
     assert blank_message.acked
-    assert dlq.messages == [(blank_message, "multiple matching handlers")]
+    assert list(dlq.values()) == [(blank_message, "multiple matching handlers")]

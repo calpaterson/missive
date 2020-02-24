@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Tuple
+from typing import Tuple, Iterator
 import sqlite3
 import pickle
 
@@ -19,11 +19,19 @@ INSERT INTO messages
 VALUES (?, ?, ?, ?);
 """
 
+DELETE = """
+DELETE FROM messages WHERE message_id = ?;
+"""
+
 OLDEST = """
 SELECT message_bytes, reason, inserted
 FROM messages
 ORDER BY inserted DESC
 LIMIT 1;
+"""
+
+LENGTH = """
+SELECT count(*) from messages
 """
 
 
@@ -33,14 +41,27 @@ class SQLiteDLQ(DLQ):
         self.db_handle = sqlite3.connect(connection_str)
         self.db_handle.execute(SCHEMA)
 
-    def add(self, message: Message, reason: str) -> None:
+    def __setitem__(self, message_id: bytes, pair: Tuple[Message, str]) -> None:
+        message, reason = pair
         now = datetime.utcnow().replace(tzinfo=timezone.utc)
         self.db_handle.execute(
-            INSERT, (message.message_id.bytes, pickle.dumps(message), reason, now)
+            INSERT, (message.message_id, pickle.dumps(message), reason, now)
         )
         self.db_handle.commit()
 
-    def remove(self, message: Message) -> None:
+    def __delitem__(self, message_id: bytes) -> None:
+        self.db_handle.execute(DELETE, (message_id,))
+        self.db_handle.commit()
+
+    def __len__(self) -> int:
+        rv: int = self.db_handle.execute(LENGTH).fetchall()[0][0]
+        self.db_handle.commit()
+        return rv
+
+    def __getitem__(self, message_id: bytes) -> Tuple[Message, str]:
+        ...
+
+    def __iter__(self) -> Iterator[bytes]:
         ...
 
     def oldest(self) -> Tuple[Message, str, datetime]:

@@ -1,7 +1,9 @@
 import abc
 import uuid
 from logging import getLogger
-from typing import Callable, MutableMapping, Sequence, FrozenSet, Optional
+import collections.abc
+from datetime import datetime
+from typing import Callable, MutableMapping, Sequence, FrozenSet, Optional, Tuple
 
 logger = getLogger("missive")
 
@@ -9,7 +11,7 @@ logger = getLogger("missive")
 class Message(metaclass=abc.ABCMeta):
     def __init__(self, data: bytes = b"") -> None:
         self.data = data
-        self.message_id = uuid.uuid4()
+        self.message_id = uuid.uuid4().bytes
 
     @abc.abstractmethod
     def ack(self) -> None:
@@ -20,9 +22,9 @@ class Message(metaclass=abc.ABCMeta):
         ...
 
     def __repr__(self) -> str:
-        return "<%s (%s, %r)>" % (
+        return "<%s (%r, %r)>" % (
             self.__class__.__name__,
-            self.message_id,
+            self.message_id.hex(),
             self.data[:30],
         )
 
@@ -63,11 +65,7 @@ class TestClient:
         self.processor.handle(message)
 
 
-class DLQ(metaclass=abc.ABCMeta):
-    @abc.abstractmethod
-    def add(self, message: Message, reason: str) -> None:
-        ...
-
+DLQ = MutableMapping[bytes, Tuple[Message, str]]
 
 Matcher = Callable[[Message], bool]
 
@@ -101,7 +99,7 @@ class Processor:
             reason = "no matching handlers"
             if self.dlq is not None:
                 logger.warning("no matching handlers for %s - putting on dlq", message)
-                self.dlq.add(message, reason)
+                self.dlq[message.message_id] = (message, reason)
                 message.ack()
                 return
             else:
@@ -117,7 +115,7 @@ class Processor:
                 logger.warning(
                     "multiple matching handlers for %s - putting on dlq", message
                 )
-                self.dlq.add(message, reason)
+                self.dlq[message.message_id] = (message, reason)
                 message.ack()
                 return
             logger.critical(
