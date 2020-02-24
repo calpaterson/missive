@@ -1,6 +1,7 @@
 import abc
+import uuid
 from logging import getLogger
-from typing import Callable, MutableMapping, Tuple, Sequence, FrozenSet, Optional
+from typing import Callable, MutableMapping, Sequence, FrozenSet, Optional
 
 logger = getLogger("missive")
 
@@ -8,6 +9,7 @@ logger = getLogger("missive")
 class Message(metaclass=abc.ABCMeta):
     def __init__(self, data: bytes = b"") -> None:
         self.data = data
+        self.message_id = uuid.uuid4()
 
     @abc.abstractmethod
     def ack(self) -> None:
@@ -18,10 +20,20 @@ class Message(metaclass=abc.ABCMeta):
         ...
 
     def __repr__(self) -> str:
-        return "<%s (%r)>" % (self.__class__.__name__, self.data)
+        return "<%s (%s, %r)>" % (
+            self.__class__.__name__,
+            self.message_id,
+            self.data[:30],
+        )
 
     def __str__(self) -> str:
         return repr(self)
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, self.__class__):
+            return False
+        else:
+            return self.message_id == other.message_id
 
 
 class TestMessage(Message):

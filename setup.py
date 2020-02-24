@@ -11,7 +11,7 @@ setup(
     zip_safe=True,
     install_requires=["flask~=1.1.1",],
     extras_require={
-        "tests": ["pytest~=5.3.1", "pytest-cov~=2.8.1"],
+        "tests": ["pytest~=5.3.1", "pytest-cov~=2.8.1", "freezegun==0.3.15"],
         "dev": [
             "wheel~=0.33.6",
             "black~=19.10b0",
