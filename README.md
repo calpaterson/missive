@@ -39,7 +39,8 @@ Goals:
 
 3. But provide escape hatches when necessary (**MISSING**)
 
-    However, many message transports provide unique features
+    However, many message transports provide unique features and they'll need
+    to be accessed - probably on the adapter somewhere.
 
 4. A test client to allow for testing without running the message transport (**DONE**)
 
@@ -49,11 +50,24 @@ Goals:
     running message transport.
 
 5. Facility for "dead letter queues" (DLQs) where problem messages can be
-   stored for later manual review (**DONE**)
+   stored for later manual review (**PROOF-OF-CONCEPT**)
 
-   A very common requirement is that "problem" messages (unreadable,
-   ambigious, unknown, etc) can be filed away for later manual inspection and
-   replay.  DLQs will be pluggable
+    A very common requirement is that "problem" messages (unreadable,
+    ambigious, unknown, etc) can be filed away for later manual inspection and
+    replay.  DLQs will be pluggable
+
+6. A method for retrying transient failures (**MISSING**)
+
+    DLQs often get filled with transient failures that need periodic retry.
+    Some of of mechanism is needed for periodic retry.  Generic "middleware"
+    approaches to be avoided if possible
+
+7. A rich library of matchers (**MISSING**)
+
+    Matchers can be callables but it would be nice to have better building
+    blocks in the form of proper class instances (that also have `__call__`
+    defined).
+
 
 Non-goals:
 
@@ -80,7 +94,7 @@ Planned:
 
 1. Metrics
 
-    Somehow
+    Somehow!
 
 2. Respect for message confidentiality
 
