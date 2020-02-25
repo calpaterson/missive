@@ -3,7 +3,7 @@ from typing import Tuple, Iterator
 import sqlite3
 import pickle
 
-from ..missive import DLQ, Message
+from ..missive import DLQ, Message, M
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS messages (
@@ -35,7 +35,7 @@ SELECT count(*) from messages
 """
 
 
-class SQLiteDLQ(DLQ):
+class SQLiteDLQ(DLQ[M]):
     def __init__(self, connection_str: str):
         self.connection_str = connection_str
         self.db_handle = sqlite3.connect(connection_str)
@@ -58,7 +58,7 @@ class SQLiteDLQ(DLQ):
         self.db_handle.commit()
         return rv
 
-    def __getitem__(self, message_id: bytes) -> Tuple[Message, str]:
+    def __getitem__(self, message_id: bytes) -> Tuple[M, str]:
         ...
 
     def __iter__(self) -> Iterator[bytes]:

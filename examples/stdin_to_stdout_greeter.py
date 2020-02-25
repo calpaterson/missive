@@ -1,11 +1,12 @@
 import missive
+from missive.messages import GenericMessage
 from missive.adapters.stdin import StdinAdapter
 
-processor = missive.Processor()
+processor = missive.Processor[GenericMessage]()
 
 
-def is_greeting(message: missive.Message):
-    return message.data in [b"hello", b"goodbye"]
+def is_greeting(message: GenericMessage) -> bool:
+    return message.raw_data in [b"hello", b"goodbye"]
 
 
 @processor.handle_for([is_greeting])

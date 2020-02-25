@@ -1,7 +1,8 @@
 import missive
+from missive.messages import GenericMessage
 from missive.adapters.wsgi import WSGIAdapter
 
-processor = missive.Processor()
+processor = missive.Processor[GenericMessage]()
 
 
 @processor.handle_for([])

@@ -6,8 +6,8 @@ from ..missive import Adapter, Processor
 from ..messages import GenericMessage
 
 
-class WSGIAdapter(Adapter):
-    def __init__(self, processor: Processor) -> None:
+class WSGIAdapter(Adapter[GenericMessage]):
+    def __init__(self, processor: Processor[GenericMessage]) -> None:
         self.processor = processor
 
         self.app = flask.Flask("missive")

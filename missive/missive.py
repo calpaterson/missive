@@ -1,7 +1,16 @@
 import abc
 import uuid
 from logging import getLogger
-from typing import Callable, MutableMapping, Sequence, FrozenSet, Optional, Tuple
+from typing import (
+    Callable,
+    MutableMapping,
+    Sequence,
+    FrozenSet,
+    Optional,
+    Tuple,
+    Generic,
+    TypeVar,
+)
 
 logger = getLogger("missive")
 
@@ -49,42 +58,47 @@ class TestMessage(Message):
         self.nacked = True
 
 
-class Adapter(metaclass=abc.ABCMeta):
+M = TypeVar("M", bound=Message)
+
+
+class Adapter(Generic[M], metaclass=abc.ABCMeta):
     @abc.abstractmethod
-    def __init__(self, processor: "Processor"):
+    def __init__(self, processor: "Processor[M]"):
         ...
 
 
-class TestClient:
-    def __init__(self, processor: "Processor"):
+class TestClient(Generic[M]):
+    def __init__(self, processor: "Processor[M]"):
         self.processor = processor
 
-    def send(self, message: TestMessage) -> None:
+    def send(self, message: M) -> None:
         self.processor.handle(message)
 
 
-DLQ = MutableMapping[bytes, Tuple[Message, str]]
+DLQ = MutableMapping[bytes, Tuple[M, str]]
 
-Matcher = Callable[[Message], bool]
+Matcher = Callable[[M], bool]
 
-Handler = Callable[[Message], None]
+Handler = Callable[[M], None]
 
 
-class Processor:
+class Processor(Generic[M]):
     def __init__(self) -> None:
-        self.handlers: MutableMapping[FrozenSet[Matcher], Handler] = {}
-        self.dlq: Optional[DLQ] = None
+        self.handlers: MutableMapping[FrozenSet[Matcher[M]], Handler[M]] = {}
+        self.dlq: Optional[DLQ[M]] = None
 
-    def handle_for(self, matchers: Sequence[Matcher]) -> Callable[[Handler], None]:
-        def wrapper(fn: Handler) -> None:
+    def handle_for(
+        self, matchers: Sequence[Matcher[M]]
+    ) -> Callable[[Handler[M]], None]:
+        def wrapper(fn: Handler[M]) -> None:
             self.handlers[frozenset(matchers)] = fn
 
         return wrapper
 
-    def set_dlq(self, dlq: DLQ) -> None:
+    def set_dlq(self, dlq: DLQ[M]) -> None:
         self.dlq = dlq
 
-    def handle(self, message: Message) -> None:
+    def handle(self, message: M) -> None:
         matching_handlers = []
         for matchers, handler in self.handlers.items():
             if all(matcher(message) for matcher in matchers):
@@ -126,5 +140,5 @@ class Processor:
         logger.debug("calling %s", sole_matching_handler)
         sole_matching_handler(message)
 
-    def test_client(self) -> TestClient:
+    def test_client(self) -> TestClient[M]:
         return TestClient(self)

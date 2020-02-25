@@ -4,8 +4,8 @@ from ..missive import Adapter, Processor
 from ..messages import GenericMessage
 
 
-class StdinAdapter(Adapter):
-    def __init__(self, processor: "Processor") -> None:
+class StdinAdapter(Adapter[GenericMessage]):
+    def __init__(self, processor: Processor[GenericMessage]) -> None:
         self.processor = processor
 
     def run(self) -> None:
