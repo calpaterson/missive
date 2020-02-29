@@ -19,8 +19,12 @@ class WSGIAdapter(Adapter[M]):
             message = self.message_cls(flask.request.data)
             with processor.handling_context(self.message_cls, self) as ctx:
                 ctx.handle(message)
-                # FIXME: should check whether acked or nacked first
-                return "", 200
+                if message in self.acked:
+                    self.acked.remove(message)
+                    return flask.jsonify({"result": "ack"}), 200
+                else:
+                    self.nacked.remove(message)
+                    return flask.jsonify({"result": "nack"}), 500
 
     def ack(self, message: M) -> None:
         self.acked.append(message)
