@@ -12,14 +12,17 @@ logger = getLogger(__name__)
 
 class ShutdownHandler:
     def __init__(self) -> None:
-        self.flag = False
+        self.flag = threading.Event()
 
     def should_exit(self) -> bool:
-        return self.flag
+        return self.flag.is_set()
 
     def set_flag(self) -> None:
         logger.warning("setting flag!")
-        self.flag = True
+        self.flag.set()
+
+    def wait_for_flag(self) -> None:
+        self.flag.wait()
 
 
 class RedisPubSubAdapter(missive.Adapter[missive.M]):
@@ -36,6 +39,7 @@ class RedisPubSubAdapter(missive.Adapter[missive.M]):
         self.shutdown_handler = ShutdownHandler()
         self.channels = channels
         self.thread: Optional[threading.Thread] = None
+        self.thread_sleep = 0.001
 
     def ack(self, message: missive.M) -> None:
         pass
@@ -53,10 +57,9 @@ class RedisPubSubAdapter(missive.Adapter[missive.M]):
             self.pubsub.subscribe(**{channel: handler for channel in self.channels})
             logger.info("subscribed to channels: %s", self.channels)
 
-            self.thread = self.pubsub.run_in_thread(sleep_time=0.001)  # type: ignore
+            self.thread = self.pubsub.run_in_thread(sleep_time=self.thread_sleep)  # type: ignore
             logger.info("started thread: %s", self.thread)
 
-            while not self.shutdown_handler.should_exit():
-                time.sleep(0.1)
+            self.shutdown_handler.wait_for_flag()
             self.thread.stop()  # type: ignore
             logger.info("shutting down")

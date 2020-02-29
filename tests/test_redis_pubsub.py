@@ -1,3 +1,4 @@
+import time
 import threading
 import json
 
@@ -14,8 +15,6 @@ def redis_client():
 
 
 def test_message_receipt(redis_client):
-    import time
-
     processor: missive.Processor[missive.JSONMessage] = missive.Processor()
 
     flag = False
@@ -32,12 +31,14 @@ def test_message_receipt(redis_client):
     thread = threading.Thread(target=adapter.run)
     thread.start()
 
-    time.sleep(0.1)
+    while adapter.thread is None:
+        time.sleep(0)
 
     test_event = {"test-event": True}
 
     redis_client.publish("test-channel", json.dumps(test_event))
-    time.sleep(0.1)
+
+    while adapter.thread.is_alive():
+        time.sleep(0)
 
     assert flag == test_event
-    thread.join()
