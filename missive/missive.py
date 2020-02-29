@@ -80,27 +80,20 @@ class Adapter(Generic[M], metaclass=abc.ABCMeta):
 
 
 class TestAdapter(Adapter[M]):
-    def __init__(self, processor: "Processor[M]", test_client: "TestClient[M]"):
-        self.processor = processor
-        self.test_client = test_client
-
-    def ack(self, message: M) -> None:
-        self.test_client.acked.append(message)
-
-    def nack(self, message: M) -> None:
-        self.test_client.nacked.append(message)
-
-
-class TestClient(Generic[M]):
     def __init__(self, processor: "Processor[M]"):
         self.processor = processor
         self.acked: List[M] = []
         self.nacked: List[M] = []
-        self.adapter = TestAdapter(self.processor, self)
+
+    def ack(self, message: M) -> None:
+        self.acked.append(message)
+
+    def nack(self, message: M) -> None:
+        self.nacked.append(message)
 
     def send(self, message: M) -> None:
         ctx: "HandlingContext[M]"
-        with self.processor.handling_context(self.adapter) as ctx:
+        with self.processor.handling_context(self) as ctx:
             ctx.handle(message)
 
 
@@ -185,5 +178,5 @@ class Processor(Generic[M]):
     def handling_context(self, adapter: Adapter[M]) -> Iterator[HandlingContext[M]]:
         yield HandlingContext(adapter, self)
 
-    def test_client(self) -> TestClient[M]:
-        return TestClient(self)
+    def test_client(self) -> TestAdapter[M]:
+        return TestAdapter(self)
