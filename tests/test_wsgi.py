@@ -15,7 +15,7 @@ def test_acking():
         message_received = message
         ctx.ack(message)
 
-    adapted_processor = WSGIAdapter(processor)
+    adapted_processor = WSGIAdapter(m.GenericMessage, processor)
 
     with adapted_processor.app.test_client() as test_client:
         response = test_client.post("/", data=b"hello")

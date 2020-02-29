@@ -18,6 +18,7 @@ from typing import (
     Dict,
     Any,
     Iterator,
+    Type,
 )
 
 logger = getLogger("missive")
@@ -93,7 +94,7 @@ class TestAdapter(Adapter[M]):
 
     def send(self, message: M) -> None:
         ctx: "HandlingContext[M]"
-        with self.processor.handling_context(self) as ctx:
+        with self.processor.handling_context(type(message), self) as ctx:
             ctx.handle(message)
 
 
@@ -105,7 +106,10 @@ Handler = Callable[[M, "HandlingContext[M]"], None]
 
 
 class HandlingContext(Generic[M]):
-    def __init__(self, adapter: Adapter[M], processor: "Processor[M]") -> None:
+    def __init__(
+        self, message_cls: Type[M], adapter: Adapter[M], processor: "Processor[M]"
+    ) -> None:
+        self.message_cls = message_cls
         self.adapter = adapter
         self.processor = processor
 
@@ -175,8 +179,10 @@ class Processor(Generic[M]):
         self.dlq = dlq
 
     @contextmanager
-    def handling_context(self, adapter: Adapter[M]) -> Iterator[HandlingContext[M]]:
-        yield HandlingContext(adapter, self)
+    def handling_context(
+        self, message_cls: Type[M], adapter: Adapter[M]
+    ) -> Iterator[HandlingContext[M]]:
+        yield HandlingContext(message_cls, adapter, self)
 
     def test_client(self) -> TestAdapter[M]:
         return TestAdapter(self)
