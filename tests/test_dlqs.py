@@ -1,14 +1,12 @@
-from typing import List, Tuple
-
-import pytest
+from typing import List, Tuple, Dict
 
 import missive as m
 
 
 def test_no_dlq_required():
-    dlq = {}
+    dlq: Dict = {}
 
-    processor = m.Processor()
+    processor: m.Processor[m.TestMessage] = m.Processor()
     processor.set_dlq(dlq)
 
     flag = False
@@ -30,9 +28,9 @@ def test_no_dlq_required():
 
 
 def test_no_matching_handler():
-    dlq = {}
+    dlq: Dict = {}
 
-    processor = m.Processor()
+    processor: m.Processor[m.TestMessage] = m.Processor()
     processor.set_dlq(dlq)
 
     @processor.handle_for((lambda m: False,))
@@ -50,9 +48,9 @@ def test_no_matching_handler():
 
 
 def test_multiple_matching_handlers():
-    dlq = {}
+    dlq: Dict = {}
 
-    processor = m.Processor()
+    processor: m.Processor[m.TestMessage] = m.Processor()
     processor.set_dlq(dlq)
 
     @processor.handle_for((lambda m: True,))

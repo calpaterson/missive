@@ -1,4 +1,5 @@
 import abc
+import json
 import uuid
 from logging import getLogger
 from typing import (
@@ -10,6 +11,10 @@ from typing import (
     Tuple,
     Generic,
     TypeVar,
+    Union,
+    List,
+    Dict,
+    Any,
 )
 
 logger = getLogger("missive")
@@ -20,11 +25,12 @@ class Message(metaclass=abc.ABCMeta):
         self.raw_data = raw_data
         self.message_id = uuid.uuid4().bytes
 
-    @abc.abstractmethod
+    # FIXME: refer to adapter here
+    # @abc.abstractmethod
     def ack(self) -> None:
         ...
 
-    @abc.abstractmethod
+    # @abc.abstractmethod
     def nack(self) -> None:
         ...
 
@@ -56,6 +62,19 @@ class TestMessage(Message):
 
     def nack(self) -> None:
         self.nacked = True
+
+
+class JSONMessage(Message):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self._json: Optional[Union[List[Dict[Any, Any]], Dict[Any, Any]]] = None
+
+    def get_json(self) -> Union[List[Dict[Any, Any]], Dict[Any, Any]]:
+        if self._json is None:
+            self._json = json.loads(self.raw_data.decode("utf-8"))
+            return self._json
+        else:
+            return self._json
 
 
 M = TypeVar("M", bound=Message)

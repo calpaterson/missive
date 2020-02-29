@@ -1,9 +1,12 @@
+from typing import cast
+
 import missive as m
+from missive.messages import GenericMessage
 from missive.adapters.wsgi import WSGIAdapter
 
 
 def test_acking():
-    processor = m.Processor()
+    processor: m.Processor[GenericMessage] = m.Processor()
 
     message_received = None
 
@@ -18,4 +21,4 @@ def test_acking():
     with adapted_processor.app.test_client() as test_client:
         test_client.post("/", data=b"hello")
 
-    assert message_received.raw_data == b"hello"
+    assert cast(m.Message, message_received).raw_data == b"hello"

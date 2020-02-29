@@ -4,7 +4,7 @@ import missive as m
 
 
 def test_one_matching_handler():
-    processor = m.Processor()
+    processor: m.Processor[m.TestMessage] = m.Processor()
 
     flag = False
 
@@ -25,7 +25,7 @@ def test_one_matching_handler():
 
 
 def test_no_matching_handler():
-    processor = m.Processor()
+    processor: m.Processor[m.TestMessage] = m.Processor()
 
     @processor.handle_for((lambda m: False,))
     def non_matching_handler(message):
@@ -42,7 +42,7 @@ def test_no_matching_handler():
 
 
 def test_multiple_matching_handlers():
-    processor = m.Processor()
+    processor: m.Processor[m.TestMessage] = m.Processor()
 
     @processor.handle_for((lambda m: True,))
     def a_matching_handler(message):
@@ -63,7 +63,7 @@ def test_multiple_matching_handlers():
 
 
 def test_one_matching_handler_among_multiple():
-    processor = m.Processor()
+    processor: m.Processor[m.TestMessage] = m.Processor()
 
     flag = False
 
