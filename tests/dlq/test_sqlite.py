@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 
 from freezegun import freeze_time
 
-from missive.messages import GenericMessage
+from missive import GenericMessage
 from missive.dlq.sqlite import SQLiteDLQ
 
 

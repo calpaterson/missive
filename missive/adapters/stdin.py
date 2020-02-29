@@ -1,7 +1,6 @@
 import sys
 
-from ..missive import Adapter, Processor
-from ..messages import GenericMessage
+from ..missive import Adapter, Processor, GenericMessage
 
 
 class StdinAdapter(Adapter[GenericMessage]):
@@ -9,6 +8,7 @@ class StdinAdapter(Adapter[GenericMessage]):
         self.processor = processor
 
     def run(self) -> None:
-        for line in sys.stdin:
-            data = line.rstrip().encode("utf-8")
-            self.processor.handle(GenericMessage(data))
+        with self.processor.handling_context(self) as ctx:
+            for line in sys.stdin:
+                data = line.rstrip().encode("utf-8")
+                ctx.handle(GenericMessage(raw_data=data))

@@ -9,9 +9,9 @@ db = []
 
 
 @processor.handle_for([lambda m: cast(str, cast(Dict, m.get_json())["flag"]) == "a"])
-def handle_as(message):
+def handle_as(message, ctx):
     db.append(message.get_json())
-    message.ack()
+    ctx.ack(message)
 
 
 def test_json():
