@@ -18,7 +18,7 @@ def test_one_matching_handler():
 
     test_client = processor.test_client()
 
-    blank_message = m.GenericMessage()
+    blank_message = m.GenericMessage(b"")
 
     test_client.send(blank_message)
 
@@ -35,7 +35,7 @@ def test_no_matching_handler():
 
     test_client = processor.test_client()
 
-    blank_message = m.GenericMessage()
+    blank_message = m.GenericMessage(b"")
 
     with pytest.raises(RuntimeError):
         test_client.send(blank_message)
@@ -56,7 +56,7 @@ def test_multiple_matching_handlers():
 
     test_client = processor.test_client()
 
-    blank_message = m.GenericMessage()
+    blank_message = m.GenericMessage(b"")
 
     with pytest.raises(RuntimeError):
         test_client.send(blank_message)
@@ -81,7 +81,7 @@ def test_one_matching_handler_among_multiple():
 
     test_client = processor.test_client()
 
-    blank_message = m.GenericMessage()
+    blank_message = m.GenericMessage(b"")
 
     test_client.send(blank_message)
 

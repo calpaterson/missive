@@ -19,6 +19,6 @@ def test_json():
 
     body = {"flag": "a"}
 
-    tc.send(missive.JSONMessage(raw_data=json.dumps(body).encode("utf-8")))
+    tc.send(missive.JSONMessage(json.dumps(body).encode("utf-8")))
 
     assert db == [body]

@@ -21,7 +21,7 @@ def test_no_dlq_required():
 
     test_client = processor.test_client()
 
-    blank_message = m.GenericMessage()
+    blank_message = m.GenericMessage(b"")
 
     test_client.send(blank_message)
 
@@ -41,7 +41,7 @@ def test_no_matching_handler():
 
     test_client = processor.test_client()
 
-    blank_message = m.GenericMessage()
+    blank_message = m.GenericMessage(b"")
 
     test_client.send(blank_message)
 
@@ -65,7 +65,7 @@ def test_multiple_matching_handlers():
 
     test_client = processor.test_client()
 
-    blank_message = m.GenericMessage()
+    blank_message = m.GenericMessage(b"")
 
     test_client.send(blank_message)
 

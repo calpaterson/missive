@@ -24,7 +24,7 @@ logger = getLogger("missive")
 
 
 class Message(metaclass=abc.ABCMeta):
-    def __init__(self, raw_data: bytes = b"") -> None:
+    def __init__(self, raw_data: bytes) -> None:
         self.raw_data = raw_data
         self.message_id = uuid.uuid4().bytes
 
@@ -50,8 +50,8 @@ class GenericMessage(Message):
 
 
 class JSONMessage(Message):
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(self, raw_data: bytes) -> None:
+        super().__init__(raw_data)
         self._json: Optional[Union[List[Dict[Any, Any]], Dict[Any, Any]]] = None
 
     def get_json(self) -> Union[List[Dict[Any, Any]], Dict[Any, Any]]:
