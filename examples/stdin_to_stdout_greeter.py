@@ -1,30 +1,29 @@
 import missive
-from missive.messages import GenericMessage
 from missive.adapters.stdin import StdinAdapter
 
-processor = missive.Processor[GenericMessage]()
+processor = missive.Processor[missive.GenericMessage]()
 
 
-def is_greeting(message: GenericMessage) -> bool:
+def is_greeting(message: missive.GenericMessage) -> bool:
     return message.raw_data in [b"hello", b"goodbye"]
 
 
 @processor.handle_for([is_greeting])
-def match_greetings(message) -> None:
-    if message.data == b"hello":
+def match_greetings(message, ctx) -> None:
+    if message.raw_data == b"hello":
         print("hi there")
-    if message.data == b"goodbye":
+    if message.raw_data == b"goodbye":
         print("bye then")
-    message.ack()
+    ctx.ack(message)
 
 
 @processor.handle_for([lambda m: not is_greeting(m)])
-def otherwise(message):
+def otherwise(message, ctx):
     # don't respond
-    message.ack()
+    ctx.ack(message)
 
 
-adapted = StdinAdapter(processor)
+adapted = StdinAdapter(missive.GenericMessage, processor)
 
 
 if __name__ == "__main__":
