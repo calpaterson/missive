@@ -6,11 +6,19 @@ from ..missive import Adapter, Processor, M
 
 
 class WSGIAdapter(Adapter[M]):
+    """Adapts a Processor to Python's Web Server Gateway Interface.
+
+    :param message_cls: The message class to pass to the processor
+    :param processor: The underlying processor
+
+    """
     def __init__(self, message_cls: Type[M], processor: Processor[M]) -> None:
         self.processor = processor
         self.message_cls = message_cls
 
-        self.app = flask.Flask("missive")
+        #: The wsgi application object - reference this in your WSGI server config
+        self.app: flask.Flask = flask.Flask("missive")
+
         self.acked: MutableSequence[M] = []
         self.nacked: MutableSequence[M] = []
 
@@ -33,4 +41,7 @@ class WSGIAdapter(Adapter[M]):
         self.nacked.append(message)
 
     def run(self) -> None:
+        """Run the wsgi application directly using Flask's builtin server.
+
+        """
         self.app.run()

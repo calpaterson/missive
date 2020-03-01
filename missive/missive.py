@@ -67,16 +67,33 @@ M = TypeVar("M", bound=Message)
 
 
 class Adapter(Generic[M], metaclass=abc.ABCMeta):
+    """Abstract base class representing the API between :class:`missive.Processor` and adapters.
+
+    """
     @abc.abstractmethod
     def __init__(self, processor: "Processor[M]"):
         ...
 
     @abc.abstractmethod
     def ack(self, message: M) -> None:
-        ...
+        """Mark a message as acknowledged.
+
+        :param message: The message object to be acknowledged.
+
+        """
 
     @abc.abstractmethod
     def nack(self, message: M) -> None:
+        """Mark a message as negatively acknowledged.
+
+        The meaning of this can vary depending on the message transport in
+        question but generally it either returns the message to the message bus
+        queue from which it came or triggers some special processing via some
+        (message bus specific) dead letter queue.
+
+        :param message: The message object to be acknowledged.
+
+        """
         ...
 
 

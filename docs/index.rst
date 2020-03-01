@@ -14,9 +14,11 @@ piece.  If you're short on time (or patience!) simply read the quickstart and
 get going.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    quickstart
+   narrative/philosophy
+   narrative/adapters
 
 Reference
 ---------
@@ -24,7 +26,7 @@ Reference
 Documentation for all classes and functions that are part of Missive.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 5
 
    api/modules
 
