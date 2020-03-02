@@ -1,10 +1,11 @@
 Missive documentation
 =====================
 
-Welcome to Missive's documentation.  The documentation is split into to two
-parts: narrative documentation to help explain the features (and rationale) of
-Missive and a reference to consult for the specifics of each class and
-function.
+Missive is a Python framework for writing message processors.
+
+Missive's documentation is split into to two parts: narrative documentation to
+help explain the features (and rationale) of Missive and a reference to consult
+for the specifics of each class and function.
 
 User guide
 ----------
