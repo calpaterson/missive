@@ -70,6 +70,7 @@ class Adapter(Generic[M], metaclass=abc.ABCMeta):
     """Abstract base class representing the API between :class:`missive.Processor` and adapters.
 
     """
+
     @abc.abstractmethod
     def __init__(self, processor: "Processor[M]"):
         ...

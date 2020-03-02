@@ -12,6 +12,7 @@ class WSGIAdapter(Adapter[M]):
     :param processor: The underlying processor
 
     """
+
     def __init__(self, message_cls: Type[M], processor: Processor[M]) -> None:
         self.processor = processor
         self.message_cls = message_cls
