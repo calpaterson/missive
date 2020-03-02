@@ -1,10 +1,11 @@
 import threading
-import time
+import random
+import string
 import contextlib
 import json
 
-import pika
 import pytest
+import librabbitmq
 
 import missive
 
@@ -12,12 +13,21 @@ from missive.adapters.rabbitmq import RabbitMQAdapter
 
 
 @pytest.fixture(scope="module")
-def rabbitmq_client():
-    with contextlib.closing(pika.BlockingConnection()) as connection:
-        yield connection
+def rabbitmq_channel():
+    with contextlib.closing(librabbitmq.Connection()) as connection:
+        with contextlib.closing(connection.channel()) as channel:
+            yield channel
 
 
-def test_message_receipt(rabbitmq_client):
+@pytest.fixture(scope="function")
+def random_queue(rabbitmq_channel):
+    postfix = "".join(random.choice(string.ascii_letters) for _ in range(5))
+    queue_name = "test-%s" % postfix
+    rabbitmq_channel.queue_declare(queue_name, auto_delete=True)
+    yield queue_name
+
+
+def test_message_receipt(rabbitmq_channel, random_queue):
     processor: missive.Processor[missive.JSONMessage] = missive.Processor()
 
     flag = False
@@ -29,20 +39,18 @@ def test_message_receipt(rabbitmq_client):
         ctx.ack(message)
         adapted.shutdown_handler.set_flag()
 
-    adapted = RabbitMQAdapter(missive.JSONMessage, processor)
-
-    channel = rabbitmq_client.channel()
-    channel.queue_declare("test")
+    adapted = RabbitMQAdapter(missive.JSONMessage, processor, random_queue)
 
     test_event = {"test-event": True}
 
-    channel.basic_publish(
-        exchange="", routing_key="test", body=json.dumps(test_event).encode("utf-8")
+    rabbitmq_channel.basic_publish(
+        exchange="",
+        routing_key=random_queue,
+        body=json.dumps(test_event).encode("utf-8"),
     )
 
     thread = threading.Thread(target=adapted.run)
     thread.start()
-
     thread.join()
 
     assert flag == test_event
