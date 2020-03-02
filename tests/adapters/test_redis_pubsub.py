@@ -24,21 +24,21 @@ def test_message_receipt(redis_client):
         nonlocal flag
         flag = message.get_json()
         ctx.ack(message)
-        adapter.shutdown_handler.set_flag()
+        adapted.shutdown_handler.set_flag()
 
-    adapter = RedisPubSubAdapter(missive.JSONMessage, processor, ["test-channel"])
+    adapted = RedisPubSubAdapter(missive.JSONMessage, processor, ["test-channel"])
 
-    thread = threading.Thread(target=adapter.run)
+    thread = threading.Thread(target=adapted.run)
     thread.start()
 
-    while adapter.thread is None:
+    while adapted.thread is None:
         time.sleep(0)
 
     test_event = {"test-event": True}
 
     redis_client.publish("test-channel", json.dumps(test_event))
 
-    while adapter.thread.is_alive():
+    while adapted.thread.is_alive():
         time.sleep(0)
 
     assert flag == test_event
