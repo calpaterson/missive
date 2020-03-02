@@ -1,6 +1,6 @@
 from typing import Dict, Any, Type
 from logging import getLogger
-from contextlib import closing
+from contextlib import ExitStack
 
 from librabbitmq import Connection
 
@@ -34,27 +34,28 @@ class RabbitMQAdapter(missive.Adapter[missive.M]):
         raise NotImplementedError("not implemented!")
 
     def run(self) -> None:
-        with closing(Connection()) as conn:
-            with self.processor.handling_context(self.message_cls, self) as ctx:
-                with closing(conn.channel()) as channel:
-                    logger.info("channel opened: %s, (%s)", channel, conn)
-                    self.channel = channel
+        with ExitStack() as stack:
+            conn = stack.enter_context(Connection())
+            channel = stack.enter_context(conn.channel())
+            ctx = stack.enter_context(
+                self.processor.handling_context(self.message_cls, self)
+            )
 
-                    def callback(rabbit_message: Any) -> None:
-                        message = self.message_cls(bytes(rabbit_message.body))
-                        delivery_tag: int = rabbit_message.delivery_info["delivery_tag"]
-                        logger.debug(
-                            "got message from rabbitmq: %s (%d)",
-                            rabbit_message,
-                            delivery_tag,
-                        )
-                        self._delivery_tags[message.message_id] = delivery_tag
-                        ctx.handle(message)
+            logger.info("channel opened: %s, (%s)", channel.channel_id, conn)
+            self.channel = channel
 
-                    channel.basic_consume(self.queue, callback=callback)
-                    logger.info("consuming from %s", self.queue)
+            def callback(rabbit_message: Any) -> None:
+                message = self.message_cls(bytes(rabbit_message.body))
+                delivery_tag: int = rabbit_message.delivery_info["delivery_tag"]
+                logger.debug(
+                    "got message from rabbitmq: %s (%d)", rabbit_message, delivery_tag,
+                )
+                self._delivery_tags[message.message_id] = delivery_tag
+                ctx.handle(message)
 
-                    while not self.shutdown_handler.should_exit():
-                        conn.drain_events()
-                logger.info("closed channel")
-        logger.info("closed connection")
+            channel.basic_consume(self.queue, callback=callback)
+            logger.info("consuming from %s", self.queue)
+
+            while not self.shutdown_handler.should_exit():
+                conn.drain_events()
+        logger.info("closed connection and channel")
