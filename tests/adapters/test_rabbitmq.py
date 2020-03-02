@@ -43,11 +43,6 @@ def test_message_receipt(rabbitmq_client):
     thread = threading.Thread(target=adapted.run)
     thread.start()
 
-    time.sleep(3)
-    # while adapted.thread is None:
-    #     time.sleep(0)
-
-    # while adapted.thread.is_alive():
-    #     time.sleep(0)
+    thread.join()
 
     assert flag == test_event
