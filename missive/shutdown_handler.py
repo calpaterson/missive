@@ -1,5 +1,7 @@
+from typing import Any
 import threading
 from logging import getLogger
+import signal
 
 logger = getLogger(__name__)
 
@@ -8,8 +10,16 @@ class ShutdownHandler:
     def __init__(self) -> None:
         self.flag = threading.Event()
 
+    def enable(self) -> None:
+        signal.signal(signal.SIGINT, self.signal_handler)
+        signal.signal(signal.SIGTERM, self.signal_handler)
+
     def should_exit(self) -> bool:
         return self.flag.is_set()
+
+    def signal_handler(self, *args: Any, **kwargs: Any) -> None:
+        logger.info("got signal: %s, %s", args, kwargs)
+        self.set_flag()
 
     def set_flag(self) -> None:
         logger.warning("setting flag!")
