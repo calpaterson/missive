@@ -53,9 +53,9 @@ class GenericMessage(Message):
 class JSONMessage(Message):
     def __init__(self, raw_data: bytes) -> None:
         super().__init__(raw_data)
-        self._json: Optional[Union[List[Dict[Any, Any]], Dict[Any, Any]]] = None
+        self._json: Optional[Any] = None
 
-    def get_json(self) -> Union[List[Dict[Any, Any]], Dict[Any, Any]]:
+    def get_json(self) -> Any:
         if self._json is None:
             self._json = json.loads(self.raw_data.decode("utf-8"))
             return self._json

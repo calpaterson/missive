@@ -3,11 +3,13 @@ import random
 import string
 import contextlib
 import json
+from unittest.mock import patch, Mock
 
 import pytest
 import librabbitmq
 
 import missive
+from missive import shutdown_handler
 
 from missive.adapters.rabbitmq import RabbitMQAdapter
 
@@ -27,6 +29,7 @@ def random_queue(rabbitmq_channel):
     yield queue_name
 
 
+@patch.object(shutdown_handler, "signal", Mock())
 def test_message_receipt(rabbitmq_channel, random_queue):
     processor: missive.Processor[missive.JSONMessage] = missive.Processor()
 

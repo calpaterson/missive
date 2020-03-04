@@ -17,8 +17,8 @@ class ShutdownHandler:
     def should_exit(self) -> bool:
         return self.flag.is_set()
 
-    def signal_handler(self, *args: Any, **kwargs: Any) -> None:
-        logger.info("got signal: %s, %s", args, kwargs)
+    def signal_handler(self, signal: int, frame: Any) -> None:
+        logger.info("got signal %d, %s", signal, frame)
         self.set_flag()
 
     def set_flag(self) -> None:

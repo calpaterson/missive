@@ -1,6 +1,7 @@
 from typing import Dict, Any, Type
 from logging import getLogger
-from contextlib import ExitStack
+from contextlib import ExitStack, closing
+import socket
 
 from librabbitmq import Connection
 
@@ -34,9 +35,10 @@ class RabbitMQAdapter(missive.Adapter[missive.M]):
         raise NotImplementedError("not implemented!")
 
     def run(self) -> None:
+        self.shutdown_handler.enable()
         with ExitStack() as stack:
-            conn = stack.enter_context(Connection())
-            channel = stack.enter_context(conn.channel())
+            conn = stack.enter_context(closing(Connection()))
+            channel = stack.enter_context(closing(conn.channel()))
             ctx = stack.enter_context(
                 self.processor.handling_context(self.message_cls, self)
             )
@@ -57,5 +59,19 @@ class RabbitMQAdapter(missive.Adapter[missive.M]):
             logger.info("consuming from %s", self.queue)
 
             while not self.shutdown_handler.should_exit():
-                conn.drain_events()
+                try:
+                    conn.drain_events(timeout=5)
+                except socket.timeout:
+                    # when the timeout is hit this exception is raised
+                    pass
+                except InterruptedError:
+                    # it seems that librabbitmq doesn't like it when signals
+                    # are recieved
+
+                    # FIXME: there may be a better way of doing this putting
+                    # everything in a different thread and using the main
+                    # thread simply to attend to the shutdown handler or
+                    # alternatively signal.set_wakeup_fd
+                    pass
+            channel.basic_cancel(self.queue)
         logger.info("closed connection and channel")
