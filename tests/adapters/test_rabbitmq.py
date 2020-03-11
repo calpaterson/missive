@@ -26,10 +26,11 @@ def random_queue(channel):
     postfix = "".join(random.choice(string.ascii_letters) for _ in range(5))
     queue_name = "test-%s" % postfix
 
-    queue = kombu.Queue(queue_name, auto_delete=True)
+    queue = kombu.Queue(queue_name)
     bound_queue = queue(channel)
     bound_queue.declare()
     yield bound_queue
+    bound_queue.delete()
 
 
 @patch.object(shutdown_handler, "signal", Mock())
@@ -59,3 +60,6 @@ def test_message_receipt(channel, random_queue):
     thread.join()
 
     assert flag == test_event
+
+    # Assert nothing left on the queue
+    assert random_queue.get() is None
