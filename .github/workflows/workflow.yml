@@ -15,8 +15,6 @@ jobs:
         image: rabbitmq
         ports:
           - 5672:5672
-
-    services:
       redis:
         image: redis
         ports:
