@@ -26,7 +26,7 @@ class RabbitMQAdapter(missive.Adapter[missive.M]):
 
     def ack(self, message: missive.M) -> None:
         self._current_kombu_message.ack()
-        logger.info("acked %s", message)
+        logger.debug("acked %s", message)
 
     def nack(self, message: missive.M) -> None:
         raise NotImplementedError("not implemented!")
@@ -37,6 +37,7 @@ class RabbitMQAdapter(missive.Adapter[missive.M]):
             conn = stack.enter_context(kombu.Connection())
             queue = kombu.Queue(self.queue)
             consumer = stack.enter_context(kombu.Consumer(conn, [queue]))
+            logger.info("connected to %s", conn.as_uri())
 
             ctx = stack.enter_context(
                 self.processor.handling_context(self.message_cls, self)
@@ -45,14 +46,14 @@ class RabbitMQAdapter(missive.Adapter[missive.M]):
             def callback(kombu_message: Any) -> None:
                 message = self.message_cls(bytes(kombu_message.body))
                 self._current_kombu_message = kombu_message
-                logger.info(
+                logger.debug(
                     "got message from rabbitmq: %s ", kombu_message,
                 )
                 ctx.handle(message)
 
             consumer.on_message = callback
 
-            logger.info("consuming from %s", queue)
+            logger.debug("consuming from %s", queue)
 
             while not self.shutdown_handler.should_exit():
                 try:
