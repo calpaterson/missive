@@ -22,7 +22,7 @@ class ShutdownHandler:
         self.set_flag()
 
     def set_flag(self) -> None:
-        logger.warning("setting flag!")
+        logger.warning("setting shutdown flag!")
         self.flag.set()
 
     def wait_for_flag(self) -> None:
