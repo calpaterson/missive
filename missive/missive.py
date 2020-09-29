@@ -99,6 +99,9 @@ class Adapter(Generic[M], metaclass=abc.ABCMeta):
 
 
 class TestAdapter(Adapter[M]):
+    # Tell pytest not to try and collect this class
+    __test__ = False
+
     def __init__(self, processor: "Processor[M]"):
         self.processor = processor
         self.acked: List[M] = []
