@@ -2,6 +2,8 @@
 
 Missive is a framework for writing message (/event) handlers in Python.
 
+**Please beware that Missive does not (yet) maintain a stable API and is not ready for production use.**
+
 It's best explained with some sample code:
 
 ```python

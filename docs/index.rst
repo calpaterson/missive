@@ -3,6 +3,8 @@ Missive documentation
 
 Missive is a Python framework for writing message processors.
 
+**Please beware that Missive does not (yet) maintain a stable API and is not ready for production use.**
+
 Missive's documentation is split into to two parts: narrative documentation to
 help explain the features (and rationale) of Missive and a reference to consult
 for the specifics of each class and function.
