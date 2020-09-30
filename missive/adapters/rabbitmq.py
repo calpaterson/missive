@@ -1,4 +1,4 @@
-from typing import Any, Type
+from typing import Any, Type, Sequence
 from logging import getLogger
 from contextlib import ExitStack
 import socket
@@ -17,12 +17,16 @@ class RabbitMQAdapter(missive.Adapter[missive.M]):
         self,
         message_cls: Type[missive.M],
         processor: missive.Processor[missive.M],
-        queue: str,
+        queues: Sequence[str],
+        url: str = "amqp://",
+        disable_shutdown_handler: bool = False,
     ) -> None:
         self.message_cls = message_cls
         self.processor = processor
         self.shutdown_handler = ShutdownHandler()
-        self.queue = queue
+        self.url = url
+        self.queues = queues
+        self.disable_shutdown_handler = disable_shutdown_handler
 
     def ack(self, message: missive.M) -> None:
         self._current_kombu_message.ack()
@@ -32,18 +36,21 @@ class RabbitMQAdapter(missive.Adapter[missive.M]):
         raise NotImplementedError("not implemented!")
 
     def run(self) -> None:
-        self.shutdown_handler.enable()
+        if not self.disable_shutdown_handler:
+            self.shutdown_handler.enable()
         with ExitStack() as stack:
-            conn = stack.enter_context(kombu.Connection())
-            queue = kombu.Queue(self.queue)
-            consumer = stack.enter_context(kombu.Consumer(conn, [queue]))
+            conn = stack.enter_context(kombu.Connection(self.url))
+            channel = stack.enter_context(conn.channel())
             logger.info("connected to %s", conn.as_uri())
+
+            queues = [kombu.Queue(queue, channel=channel) for queue in self.queues]
+            consumer = kombu.Consumer(channel, queues)
 
             ctx = stack.enter_context(
                 self.processor.handling_context(self.message_cls, self)
             )
 
-            def callback(kombu_message: Any) -> None:
+            def callback(body: Any, kombu_message: Any) -> None:
                 message = self.message_cls(bytes(kombu_message.body))
                 self._current_kombu_message = kombu_message
                 logger.debug(
@@ -51,9 +58,12 @@ class RabbitMQAdapter(missive.Adapter[missive.M]):
                 )
                 ctx.handle(message)
 
-            consumer.on_message = callback
+            consumer.register_callback(callback)
 
-            logger.debug("consuming from %s", queue)
+            # Enter the consumer's context ONLY after registering callbacks
+            stack.enter_context(consumer)
+
+            logger.debug("consuming from %s", queues)
 
             while not self.shutdown_handler.should_exit():
                 try:

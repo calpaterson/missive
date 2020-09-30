@@ -21,16 +21,20 @@ def channel():
             yield channel
 
 
-@pytest.fixture(scope="function")
-def random_queue(channel):
+def make_random_queue(channel):
     postfix = "".join(random.choice(string.ascii_letters) for _ in range(5))
     queue_name = "test-%s" % postfix
 
-    queue = kombu.Queue(queue_name)
-    bound_queue = queue(channel)
-    bound_queue.declare()
-    yield bound_queue
-    bound_queue.delete()
+    queue = kombu.Queue(queue_name, channel=channel)
+    return queue
+
+
+@pytest.fixture(scope="function")
+def random_queue(channel):
+    queue = make_random_queue(channel)
+    queue.declare()
+    yield queue
+    queue.delete()
 
 
 @patch.object(shutdown_handler, "signal", Mock())
@@ -46,7 +50,12 @@ def test_message_receipt(channel, random_queue):
         ctx.ack(message)
         adapted.shutdown_handler.set_flag()
 
-    adapted = RabbitMQAdapter(missive.JSONMessage, processor, random_queue.name)
+    adapted = RabbitMQAdapter(
+        missive.JSONMessage,
+        processor,
+        [random_queue.name],
+        disable_shutdown_handler=True,
+    )
 
     test_event = {"test-event": True}
     producer = kombu.Producer(channel)
@@ -63,3 +72,41 @@ def test_message_receipt(channel, random_queue):
 
     # Assert nothing left on the queue
     assert random_queue.get() is None
+
+
+def test_receipt_from_multiple_queues(channel):
+    q1 = make_random_queue(channel)
+    q1.declare()
+    q2 = make_random_queue(channel)
+    q2.declare()
+
+    messages = set()
+
+    processor: missive.Processor[missive.JSONMessage] = missive.Processor()
+
+    @processor.handle_for([])
+    def catch_all(message, ctx):
+        messages.add(message.get_json()["n"])
+        ctx.ack(message)
+        if len(messages) >= 2:
+            adapted.shutdown_handler.set_flag()
+
+    adapted = RabbitMQAdapter(
+        missive.JSONMessage,
+        processor,
+        [q1.name, q2.name],
+        disable_shutdown_handler=True,
+    )
+
+    producer = kombu.Producer(channel)
+    producer.publish(json.dumps({"n": 1}).encode("utf-8"), routing_key=q1.name)
+    producer.publish(json.dumps({"n": 2}).encode("utf-8"), routing_key=q2.name)
+
+    thread = threading.Thread(target=adapted.run)
+    thread.start()
+    thread.join()
+
+    assert len(messages) == 2
+
+    q1.delete()
+    q2.delete()
