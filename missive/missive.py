@@ -4,7 +4,6 @@ import uuid
 from contextlib import contextmanager
 from logging import getLogger
 from typing import (
-    ContextManager,
     Callable,
     MutableMapping,
     Sequence,
@@ -13,9 +12,7 @@ from typing import (
     Tuple,
     Generic,
     TypeVar,
-    Union,
     List,
-    Dict,
     Any,
     Iterator,
     Type,
