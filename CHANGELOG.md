@@ -7,6 +7,9 @@ Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+- Make the `drain_timeout` on the RabbitMQ configurable and reduce the default
+  from 5 to 1
+
 ## [0.5.2] - 2020-09-30
 
 - RabbitMQAdapter now has an optional url parameter

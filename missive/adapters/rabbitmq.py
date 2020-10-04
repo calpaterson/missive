@@ -20,6 +20,7 @@ class RabbitMQAdapter(missive.Adapter[missive.M]):
         queues: Sequence[str],
         url: str = "amqp://",
         disable_shutdown_handler: bool = False,
+        drain_timeout: int = 1,
     ) -> None:
         self.message_cls = message_cls
         self.processor = processor
@@ -27,6 +28,7 @@ class RabbitMQAdapter(missive.Adapter[missive.M]):
         self.url = url
         self.queues = queues
         self.disable_shutdown_handler = disable_shutdown_handler
+        self.drain_timeout = drain_timeout
 
     def ack(self, message: missive.M) -> None:
         self._current_kombu_message.ack()
@@ -65,9 +67,10 @@ class RabbitMQAdapter(missive.Adapter[missive.M]):
 
             logger.debug("consuming from %s", queues)
 
+            drain_timeout = self.drain_timeout
             while not self.shutdown_handler.should_exit():
                 try:
-                    conn.drain_events(timeout=5)
+                    conn.drain_events(timeout=drain_timeout)
                 except socket.timeout:
                     # when the timeout is hit this exception is raised
                     pass
