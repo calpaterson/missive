@@ -118,6 +118,7 @@ def test_passing_a_conn(channel, random_queue, connection):
     # Assert nothing left on the queue
     assert random_queue.get() is None
 
+
 def test_nack(channel, random_queue):
     processor: missive.Processor[missive.JSONMessage] = missive.Processor()
 
@@ -155,6 +156,7 @@ def test_nack(channel, random_queue):
     message = random_queue.get()
     assert message.delivery_info["redelivered"]
     message.ack()  # clear it
+
 
 def test_receipt_from_multiple_queues(channel):
     q1 = make_random_queue(channel)
