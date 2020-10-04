@@ -40,6 +40,7 @@ class RabbitMQAdapter(missive.Adapter[missive.M]):
     def run(self) -> None:
         if not self.disable_shutdown_handler:
             self.shutdown_handler.enable()
+
         with ExitStack() as stack:
             conn = stack.enter_context(kombu.Connection(self.url))
             channel = stack.enter_context(conn.channel())

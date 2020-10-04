@@ -1,7 +1,6 @@
 import threading
 import random
 import string
-import contextlib
 import json
 from unittest.mock import patch, Mock
 
@@ -14,12 +13,19 @@ from missive.adapters.rabbitmq import RabbitMQAdapter
 
 from ..matchers import always
 
+RABBITMQ_URL = "amqp:///missive-test"
+
 
 @pytest.fixture(scope="module")
-def channel():
-    with kombu.Connection() as conn:
-        with conn.channel() as channel:
-            yield channel
+def connection(scope="module"):
+    with kombu.Connection(RABBITMQ_URL) as connection:
+        yield connection
+
+
+@pytest.fixture(scope="module")
+def channel(connection):
+    with connection.channel() as channel:
+        yield channel
 
 
 def make_random_queue(channel):
@@ -55,6 +61,7 @@ def test_message_receipt(channel, random_queue):
         missive.JSONMessage,
         processor,
         [random_queue.name],
+        url=RABBITMQ_URL,
         disable_shutdown_handler=True,
     )
 
@@ -96,6 +103,7 @@ def test_receipt_from_multiple_queues(channel):
         missive.JSONMessage,
         processor,
         [q1.name, q2.name],
+        url=RABBITMQ_URL,
         disable_shutdown_handler=True,
     )
 
