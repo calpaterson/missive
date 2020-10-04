@@ -2,6 +2,8 @@ from typing import List, Tuple, Dict
 
 import missive as m
 
+from .matchers import always, never
+
 
 def test_no_dlq_required():
     dlq: Dict = {}
@@ -11,7 +13,7 @@ def test_no_dlq_required():
 
     flag = False
 
-    @processor.handle_for([])
+    @processor.handle_for(always)
     def flip_bit(
         message: m.GenericMessage, ctx: m.HandlingContext[m.GenericMessage]
     ) -> None:
@@ -35,7 +37,7 @@ def test_no_matching_handler():
     processor: m.Processor[m.GenericMessage] = m.Processor()
     processor.set_dlq(dlq)
 
-    @processor.handle_for((lambda m: False,))
+    @processor.handle_for(never)
     def non_matching_handler(message, ctx):
         assert False
 
@@ -55,11 +57,11 @@ def test_multiple_matching_handlers():
     processor: m.Processor[m.GenericMessage] = m.Processor()
     processor.set_dlq(dlq)
 
-    @processor.handle_for((lambda m: True,))
+    @processor.handle_for(always)
     def a_matching_handler(message, ctx):
         ctx.ack(message)
 
-    @processor.handle_for((lambda m: True,))
+    @processor.handle_for(always)
     def another_matching_handler(message, ctx):
         message.ack()
 

@@ -16,7 +16,7 @@ A simple example
 
     processor = missive.Processor()
 
-    @processor.handle_for([lambda m: m.raw_data == b"Hello"])
+    @processor.handle_for(lambda m: m.raw_data == b"Hello")
     def greet(message, ctx):
         print("Hello whoever you are")
         ctx.ack(message)
@@ -63,7 +63,7 @@ was constructed with.  Here's how you might use it:
 
     processor = missive.Processor()
 
-    @processor.handle_for([HasLabelMatcher("sign-in")])
+    @processor.handle_for(HasLabelMatcher("sign-in"))
     def record_sign_ins(message, ctx):
         ...
 

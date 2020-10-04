@@ -8,7 +8,7 @@ processor: missive.Processor[missive.JSONMessage] = missive.Processor()
 db = []
 
 
-@processor.handle_for([lambda m: cast(str, cast(Dict, m.get_json())["flag"]) == "a"])
+@processor.handle_for(lambda m: cast(str, cast(Dict, m.get_json())["flag"]) == "a")
 def handle_as(message, ctx):
     db.append(message.get_json())
     ctx.ack(message)

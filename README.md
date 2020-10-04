@@ -11,7 +11,7 @@ import missive
 
 processor = missive.Processor()
 
-@processor.handle_for([])
+@processor.handle_for(lambda message: True)
 def hello_world(message: missive.Message) -> None:
     """Print 'Hello, World!' to stdin for each message"""
     print("Hello, World!")

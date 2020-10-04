@@ -139,8 +139,8 @@ class HandlingContext(Generic[M]):
 
     def handle(self, message: M) -> None:
         matching_handlers = []
-        for matchers, handler in self.processor.handlers.items():
-            if all(matcher(message) for matcher in matchers):
+        for (matcher, handler) in self.processor.handlers.keys():
+            if matcher(message):
                 logger.debug("matched %s for %s", handler, message)
                 matching_handlers.append(handler)
             else:
@@ -182,14 +182,12 @@ class HandlingContext(Generic[M]):
 
 class Processor(Generic[M]):
     def __init__(self) -> None:
-        self.handlers: MutableMapping[FrozenSet[Matcher[M]], Handler[M]] = {}
+        self.handlers: MutableMapping[Tuple[Matcher[M], Handler[M]], None] = {}
         self.dlq: Optional[DLQ[M]] = None
 
-    def handle_for(
-        self, matchers: Sequence[Matcher[M]]
-    ) -> Callable[[Handler[M]], None]:
+    def handle_for(self, matcher: Matcher[M]) -> Callable[[Handler[M]], None]:
         def wrapper(fn: Handler[M]) -> None:
-            self.handlers[frozenset(matchers)] = fn
+            self.handlers[(matcher, fn)] = None
 
         return wrapper
 

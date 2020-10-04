@@ -3,13 +3,15 @@ from typing import cast
 import missive as m
 from missive.adapters.wsgi import WSGIAdapter
 
+from ..matchers import always
+
 
 def test_acking():
     processor: m.Processor[m.GenericMessage] = m.Processor()
 
     message_received = None
 
-    @processor.handle_for([])
+    @processor.handle_for(always)
     def flip_bit(message: m.GenericMessage, ctx: m.HandlingContext[m.GenericMessage]):
         nonlocal message_received
         message_received = message
@@ -30,7 +32,7 @@ def test_nacking():
 
     message_received = None
 
-    @processor.handle_for([])
+    @processor.handle_for(always)
     def flip_bit(message: m.GenericMessage, ctx: m.HandlingContext[m.GenericMessage]):
         nonlocal message_received
         message_received = message

@@ -8,6 +8,8 @@ import pytest
 import missive
 from missive.adapters.redis import RedisPubSubAdapter
 
+from ..matchers import always
+
 
 @pytest.fixture
 def redis_client():
@@ -19,7 +21,7 @@ def test_message_receipt(redis_client):
 
     flag = False
 
-    @processor.handle_for([])
+    @processor.handle_for(always)
     def catch_all(message, ctx):
         nonlocal flag
         flag = message.get_json()

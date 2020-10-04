@@ -7,6 +7,7 @@ Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+- Change `Processor.handle_for` to take a single matcher instead of a sequence
 - Make the `drain_timeout` on the RabbitMQ configurable and reduce the default
   from 5 to 1
 

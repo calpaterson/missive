@@ -6,6 +6,8 @@ import os
 import missive
 from missive.adapters.stdin import StdinAdapter
 
+from ..matchers import always
+
 
 def test_from_file():
     r_pipe, w_pipe = os.pipe()
@@ -13,9 +15,9 @@ def test_from_file():
 
     flag = False
 
-    processor = missive.Processor()
+    processor: missive.Processor[missive.JSONMessage] = missive.Processor()
 
-    @processor.handle_for([])
+    @processor.handle_for(always)
     def catch_all(message, ctx):
         nonlocal flag
         flag = message.get_json()

@@ -10,8 +10,9 @@ import pytest
 
 import missive
 from missive import shutdown_handler
-
 from missive.adapters.rabbitmq import RabbitMQAdapter
+
+from ..matchers import always
 
 
 @pytest.fixture(scope="module")
@@ -43,7 +44,7 @@ def test_message_receipt(channel, random_queue):
 
     flag = False
 
-    @processor.handle_for([])
+    @processor.handle_for(always)
     def catch_all(message, ctx):
         nonlocal flag
         flag = message.get_json()
@@ -84,7 +85,7 @@ def test_receipt_from_multiple_queues(channel):
 
     processor: missive.Processor[missive.JSONMessage] = missive.Processor()
 
-    @processor.handle_for([])
+    @processor.handle_for(always)
     def catch_all(message, ctx):
         messages.add(message.get_json()["n"])
         ctx.ack(message)
