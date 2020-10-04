@@ -6,8 +6,6 @@ from logging import getLogger
 from typing import (
     Callable,
     MutableMapping,
-    Sequence,
-    FrozenSet,
     Optional,
     Tuple,
     Generic,
@@ -16,6 +14,7 @@ from typing import (
     Any,
     Iterator,
     Type,
+    Set,
 )
 
 logger = getLogger("missive")
@@ -182,11 +181,19 @@ class HandlingContext(Generic[M]):
 
 class Processor(Generic[M]):
     def __init__(self) -> None:
+        self.matchers: Set[Matcher[M]] = set()
         self.handlers: MutableMapping[Tuple[Matcher[M], Handler[M]], None] = {}
         self.dlq: Optional[DLQ[M]] = None
 
     def handle_for(self, matcher: Matcher[M]) -> Callable[[Handler[M]], None]:
         def wrapper(fn: Handler[M]) -> None:
+            if matcher in self.matchers:
+                (fn1,) = [h for (m, h) in self.handlers if m == matcher]
+                raise RuntimeError(
+                    f"two handlers with the same matcher: {fn} and {fn1} share {matcher}"
+                )
+            else:
+                self.matchers.add(matcher)
             self.handlers[(matcher, fn)] = None
 
         return wrapper

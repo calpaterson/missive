@@ -61,7 +61,7 @@ def test_multiple_matching_handlers():
     def a_matching_handler(message, ctx):
         ctx.ack(message)
 
-    @processor.handle_for(always)
+    @processor.handle_for(lambda m: True)
     def another_matching_handler(message, ctx):
         message.ack()
 

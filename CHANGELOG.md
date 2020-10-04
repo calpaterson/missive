@@ -10,6 +10,7 @@ Changelog](https://keepachangelog.com/en/1.0.0/).
 - Change `Processor.handle_for` to take a single matcher instead of a sequence
 - Make the `drain_timeout` on the RabbitMQ configurable and reduce the default
   from 5 to 1
+- Using the same matcher multiple times will now raise an exception on import
 
 ## [0.5.2] - 2020-09-30
 
