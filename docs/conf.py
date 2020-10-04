@@ -23,7 +23,8 @@ copyright = "2020, Cal Paterson"
 author = "Cal Paterson"
 
 # The full version, including alpha/beta/rc tags
-release = "0.2"
+VERSION_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "../VERSION"))
+release = open(VERSION_PATH).read().strip()
 
 
 # -- General configuration ---------------------------------------------------
