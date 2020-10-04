@@ -12,6 +12,8 @@ Changelog](https://keepachangelog.com/en/1.0.0/).
   from 5 to 1
 - Using the same matcher multiple times will now raise an exception on import
 - `GenericMessage` is now called `RawMessage`
+- `RabbitMQAdapter` can now take either a url or a conn, in order to share a
+  connection (it will create it's own channel)
 
 ## [0.5.2] - 2020-09-30
 

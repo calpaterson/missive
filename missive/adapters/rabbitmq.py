@@ -18,14 +18,14 @@ class RabbitMQAdapter(missive.Adapter[missive.M]):
         message_cls: Type[missive.M],
         processor: missive.Processor[missive.M],
         queues: Sequence[str],
-        url: str = "amqp://",
+        url_or_conn: Any = "amqp://",
         disable_shutdown_handler: bool = False,
         drain_timeout: int = 1,
     ) -> None:
         self.message_cls = message_cls
         self.processor = processor
         self.shutdown_handler = ShutdownHandler()
-        self.url = url
+        self.url_or_conn = url_or_conn
         self.queues = queues
         self.disable_shutdown_handler = disable_shutdown_handler
         self.drain_timeout = drain_timeout
@@ -37,12 +37,22 @@ class RabbitMQAdapter(missive.Adapter[missive.M]):
     def nack(self, message: missive.M) -> None:
         raise NotImplementedError("not implemented!")
 
+    def _get_conn(self, url_or_conn: Any, stack: ExitStack) -> Any:
+        """Either we were passed a url or a real conn - either way get us a
+        working conn."""
+        if isinstance(url_or_conn, kombu.Connection):
+            return url_or_conn
+        else:
+            # If we're creating the conn, put it on the stack so it gets closed
+            # when we exit
+            return stack.enter_context(kombu.Connection(self.url_or_conn))
+
     def run(self) -> None:
         if not self.disable_shutdown_handler:
             self.shutdown_handler.enable()
 
         with ExitStack() as stack:
-            conn = stack.enter_context(kombu.Connection(self.url))
+            conn = self._get_conn(self.url_or_conn, stack)
             channel = stack.enter_context(conn.channel())
             logger.info("connected to %s", conn.as_uri())
 

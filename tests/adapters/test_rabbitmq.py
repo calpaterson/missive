@@ -61,7 +61,44 @@ def test_message_receipt(channel, random_queue):
         missive.JSONMessage,
         processor,
         [random_queue.name],
-        url=RABBITMQ_URL,
+        url_or_conn=RABBITMQ_URL,
+        disable_shutdown_handler=True,
+    )
+
+    test_event = {"test-event": True}
+    producer = kombu.Producer(channel)
+
+    producer.publish(
+        json.dumps(test_event).encode("utf-8"), routing_key=random_queue.name
+    )
+
+    thread = threading.Thread(target=adapted.run)
+    thread.start()
+    thread.join()
+
+    assert flag == test_event
+
+    # Assert nothing left on the queue
+    assert random_queue.get() is None
+
+
+def test_passing_a_conn(channel, random_queue, connection):
+    processor: missive.Processor[missive.JSONMessage] = missive.Processor()
+
+    flag = False
+
+    @processor.handle_for(always)
+    def catch_all(message, ctx):
+        nonlocal flag
+        flag = message.get_json()
+        ctx.ack(message)
+        adapted.shutdown_handler.set_flag()
+
+    adapted = RabbitMQAdapter(
+        missive.JSONMessage,
+        processor,
+        [random_queue.name],
+        url_or_conn=connection,
         disable_shutdown_handler=True,
     )
 
@@ -103,7 +140,7 @@ def test_receipt_from_multiple_queues(channel):
         missive.JSONMessage,
         processor,
         [q1.name, q2.name],
-        url=RABBITMQ_URL,
+        url_or_conn=RABBITMQ_URL,
         disable_shutdown_handler=True,
     )
 
