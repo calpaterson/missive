@@ -30,6 +30,9 @@ class RabbitMQAdapter(missive.Adapter[missive.M]):
         self.disable_shutdown_handler = disable_shutdown_handler
         self.drain_timeout = drain_timeout
 
+        # Considered a reasonable default
+        self.prefetch_count = 50
+
     def ack(self, message: missive.M) -> None:
         self._current_kombu_message.ack()
         logger.debug("acked %s", message)
@@ -60,6 +63,9 @@ class RabbitMQAdapter(missive.Adapter[missive.M]):
             queues = [kombu.Queue(queue, channel=channel) for queue in self.queues]
             consumer = kombu.Consumer(channel, queues)
 
+            # Limit the size of the prefetch queue
+            consumer.qos(prefetch_count=self.prefetch_count)
+
             ctx = stack.enter_context(
                 self.processor.handling_context(self.message_cls, self)
             )
@@ -86,4 +92,7 @@ class RabbitMQAdapter(missive.Adapter[missive.M]):
                 except socket.timeout:
                     # when the timeout is hit this exception is raised
                     pass
+
+            # Return all messages in the prefetch queue
+            consumer.recover(requeue=True)
         logger.info("closed connection")

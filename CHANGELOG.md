@@ -15,6 +15,9 @@ Changelog](https://keepachangelog.com/en/1.0.0/).
 - `RabbitMQAdapter` can now take either a url or a conn, in order to share a
   connection (it will create it's own channel)
 - `RabbitMQAdapter` now implements nacks
+- `RabbitMQAdapter` now has a configurable default prefetch of 50 messages
+- `RabbitMQAdapter` will now ask for messages in it's prefetch queue to be
+  requeued upon shutdown
 
 ## [0.5.2] - 2020-09-30
 
