@@ -118,6 +118,43 @@ def test_passing_a_conn(channel, random_queue, connection):
     # Assert nothing left on the queue
     assert random_queue.get() is None
 
+def test_nack(channel, random_queue):
+    processor: missive.Processor[missive.JSONMessage] = missive.Processor()
+
+    flag = False
+
+    @processor.handle_for(always)
+    def catch_all(message, ctx):
+        nonlocal flag
+        flag = message.get_json()
+        ctx.nack(message)
+        adapted.shutdown_handler.set_flag()
+
+    adapted = RabbitMQAdapter(
+        missive.JSONMessage,
+        processor,
+        [random_queue.name],
+        url_or_conn=RABBITMQ_URL,
+        disable_shutdown_handler=True,
+    )
+
+    test_event = {"test-event": True}
+    producer = kombu.Producer(channel)
+
+    producer.publish(
+        json.dumps(test_event).encode("utf-8"), routing_key=random_queue.name
+    )
+
+    thread = threading.Thread(target=adapted.run)
+    thread.start()
+    thread.join()
+
+    assert flag == test_event
+
+    # Assert it's left on the queue
+    message = random_queue.get()
+    assert message.delivery_info["redelivered"]
+    message.ack()  # clear it
 
 def test_receipt_from_multiple_queues(channel):
     q1 = make_random_queue(channel)

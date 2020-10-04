@@ -35,7 +35,8 @@ class RabbitMQAdapter(missive.Adapter[missive.M]):
         logger.debug("acked %s", message)
 
     def nack(self, message: missive.M) -> None:
-        raise NotImplementedError("not implemented!")
+        self._current_kombu_message.nack()
+        logger.warning("nacked %s", message)
 
     def _get_conn(self, url_or_conn: Any, stack: ExitStack) -> Any:
         """Either we were passed a url or a real conn - either way get us a

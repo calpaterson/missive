@@ -14,6 +14,7 @@ Changelog](https://keepachangelog.com/en/1.0.0/).
 - `GenericMessage` is now called `RawMessage`
 - `RabbitMQAdapter` can now take either a url or a conn, in order to share a
   connection (it will create it's own channel)
+- `RabbitMQAdapter` now implements nacks
 
 ## [0.5.2] - 2020-09-30
 
