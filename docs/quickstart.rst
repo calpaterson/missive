@@ -21,7 +21,7 @@ A simple example
         print("Hello whoever you are")
         ctx.ack(message)
 
-    stdin_processor = StdinAdapter(missive.GenericMessage, processor)
+    stdin_processor = StdinAdapter(missive.RawMessage, processor)
 
     if __name__ == "__main__":
         stdin_processor.run()
@@ -81,7 +81,7 @@ Message formats
 ---------------
 
 You will notice that the above example had a message with a `get_json` method.
-That was a `JSONMessage` instead of a `GenericMessage`.  Processors can be
+That was a `JSONMessage` instead of a `RawMessage`.  Processors can be
 specialised on specific message types.  Some popular message types are provided
 and custom message types can be written easily by subclassing `Message`.
 
@@ -106,7 +106,7 @@ want to use Redis's PubSub facility:
 
     from missive.adapters.redis import RedisPubSubAdapter
     redis_pubsub_processor = RedisPubSubAdapter(
-        missive.GenericMessage,
+        missive.RawMessage,
         processor)
 
     redis_pubsub_processor.run()
