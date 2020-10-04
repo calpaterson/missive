@@ -8,22 +8,20 @@ from .matchers import always, never
 def test_no_dlq_required():
     dlq: Dict = {}
 
-    processor: m.Processor[m.GenericMessage] = m.Processor()
+    processor: m.Processor[m.RawMessage] = m.Processor()
     processor.set_dlq(dlq)
 
     flag = False
 
     @processor.handle_for(always)
-    def flip_bit(
-        message: m.GenericMessage, ctx: m.HandlingContext[m.GenericMessage]
-    ) -> None:
+    def flip_bit(message: m.RawMessage, ctx: m.HandlingContext[m.RawMessage]) -> None:
         nonlocal flag
         flag = True
         ctx.ack(message)
 
     test_client = processor.test_client()
 
-    blank_message = m.GenericMessage(b"")
+    blank_message = m.RawMessage(b"")
 
     test_client.send(blank_message)
 
@@ -34,7 +32,7 @@ def test_no_dlq_required():
 def test_no_matching_handler():
     dlq: Dict = {}
 
-    processor: m.Processor[m.GenericMessage] = m.Processor()
+    processor: m.Processor[m.RawMessage] = m.Processor()
     processor.set_dlq(dlq)
 
     @processor.handle_for(never)
@@ -43,7 +41,7 @@ def test_no_matching_handler():
 
     test_client = processor.test_client()
 
-    blank_message = m.GenericMessage(b"")
+    blank_message = m.RawMessage(b"")
 
     test_client.send(blank_message)
 
@@ -54,7 +52,7 @@ def test_no_matching_handler():
 def test_multiple_matching_handlers():
     dlq: Dict = {}
 
-    processor: m.Processor[m.GenericMessage] = m.Processor()
+    processor: m.Processor[m.RawMessage] = m.Processor()
     processor.set_dlq(dlq)
 
     @processor.handle_for(always)
@@ -67,7 +65,7 @@ def test_multiple_matching_handlers():
 
     test_client = processor.test_client()
 
-    blank_message = m.GenericMessage(b"")
+    blank_message = m.RawMessage(b"")
 
     test_client.send(blank_message)
 

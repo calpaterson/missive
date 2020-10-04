@@ -1,6 +1,6 @@
 # Changelog
 
-This is the changelog for missive..
+This is the changelog for missive.
 
 The format is based on [Keep a
 Changelog](https://keepachangelog.com/en/1.0.0/).
@@ -11,6 +11,7 @@ Changelog](https://keepachangelog.com/en/1.0.0/).
 - Make the `drain_timeout` on the RabbitMQ configurable and reduce the default
   from 5 to 1
 - Using the same matcher multiple times will now raise an exception on import
+- `GenericMessage` is now called `RawMessage`
 
 ## [0.5.2] - 2020-09-30
 

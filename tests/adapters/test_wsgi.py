@@ -7,17 +7,17 @@ from ..matchers import always
 
 
 def test_acking():
-    processor: m.Processor[m.GenericMessage] = m.Processor()
+    processor: m.Processor[m.RawMessage] = m.Processor()
 
     message_received = None
 
     @processor.handle_for(always)
-    def flip_bit(message: m.GenericMessage, ctx: m.HandlingContext[m.GenericMessage]):
+    def flip_bit(message: m.RawMessage, ctx: m.HandlingContext[m.RawMessage]):
         nonlocal message_received
         message_received = message
         ctx.ack(message)
 
-    adapted_processor = WSGIAdapter(m.GenericMessage, processor)
+    adapted_processor = WSGIAdapter(m.RawMessage, processor)
 
     with adapted_processor.app.test_client() as test_client:
         response = test_client.post("/", data=b"hello")
@@ -28,17 +28,17 @@ def test_acking():
 
 
 def test_nacking():
-    processor: m.Processor[m.GenericMessage] = m.Processor()
+    processor: m.Processor[m.RawMessage] = m.Processor()
 
     message_received = None
 
     @processor.handle_for(always)
-    def flip_bit(message: m.GenericMessage, ctx: m.HandlingContext[m.GenericMessage]):
+    def flip_bit(message: m.RawMessage, ctx: m.HandlingContext[m.RawMessage]):
         nonlocal message_received
         message_received = message
         ctx.nack(message)
 
-    adapted_processor = WSGIAdapter(m.GenericMessage, processor)
+    adapted_processor = WSGIAdapter(m.RawMessage, processor)
 
     with adapted_processor.app.test_client() as test_client:
         response = test_client.post("/", data=b"hello")

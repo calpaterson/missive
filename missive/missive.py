@@ -42,7 +42,9 @@ class Message(metaclass=abc.ABCMeta):
             return self.message_id == other.message_id
 
 
-class GenericMessage(Message):
+class RawMessage(Message):
+    """A raw message of just bytes with no interpretation"""
+
     ...
 
 
