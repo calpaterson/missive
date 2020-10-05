@@ -7,19 +7,22 @@ Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## [0.6.0] - 2020-10-05
+
 - Change `Processor.handle_for` to take a single matcher instead of a sequence
-- Make the `drain_timeout` on the RabbitMQ configurable and reduce the default
-  from 5 to 1
 - Using the same matcher multiple times will now raise an exception on import
 - `GenericMessage` is now called `RawMessage`
+- If a handler raises an exception and there is a DLQ configured, that message
+  will be put on the DLQ and the message will be acked
+- Make the `drain_timeout` on `RabbitMQAdapter` configurable and reduce the default
+  from 5 to 1
 - `RabbitMQAdapter` can now take either a url or a conn, in order to share a
   connection (it will create it's own channel)
 - `RabbitMQAdapter` now implements nacks
-- `RabbitMQAdapter` now has a configurable default prefetch of 50 messages
+- `RabbitMQAdapter` now has a (configurable) default prefetch of 50 messages
 - `RabbitMQAdapter` will now ask for messages in it's prefetch queue to be
   requeued upon shutdown
-- If a handler raises an exception and there is a DLQ configured, that message
-  will be put on the DLQ and the message will be acked
+
 
 ## [0.5.2] - 2020-09-30
 
