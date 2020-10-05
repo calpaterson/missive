@@ -150,7 +150,11 @@ class HandlingContext(Generic[M]):
         if len(matching_handlers) == 0:
             reason = "no matching handlers"
             if self.processor.dlq is not None:
-                logger.warning("no matching handlers for %s - putting on dlq", message)
+                logger.warning(
+                    "no matching handlers for %s "
+                    "- acking and putting putting on dlq",
+                    message,
+                )
                 self.processor.dlq[message.message_id] = (message, reason)
                 self.ack(message)
                 return
@@ -165,20 +169,44 @@ class HandlingContext(Generic[M]):
             reason = "multiple matching handlers"
             if self.processor.dlq is not None:
                 logger.warning(
-                    "multiple matching handlers for %s - putting on dlq", message
+                    "multiple matching handlers for %s "
+                    "- acking and putting message on dlq",
+                    message,
                 )
                 self.processor.dlq[message.message_id] = (message, reason)
                 self.ack(message)
                 return
             logger.critical(
-                "multiple matching handlers and no dlq configured, crashing on %s",
+                "multiple matching handlers for %s and no dlq configured - crashing",
                 message,
             )
             raise RuntimeError("multiple matching handlers")
 
-        sole_matching_handler = matching_handlers[0]
+        (sole_matching_handler,) = matching_handlers
         logger.debug("calling %s", sole_matching_handler)
-        sole_matching_handler(message, self)
+        try:
+            sole_matching_handler(message, self)
+        except Exception as e:
+            if self.processor.dlq is not None:
+                reason = str(e)
+                self.processor.dlq[message.message_id] = (message, reason)
+                logger.warning(
+                    "handler %s raised exception %s on message %s "
+                    "- acking and putting message on dlq",
+                    sole_matching_handler,
+                    e,
+                    message,
+                )
+                self.ack(message)
+            else:
+                logger.critical(
+                    "handler %s raised exception %s on"
+                    " message % and no dlq configured - crashing",
+                    sole_matching_handler,
+                    e,
+                    message,
+                )
+                raise
 
 
 class Processor(Generic[M]):

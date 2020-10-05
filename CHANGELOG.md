@@ -18,6 +18,8 @@ Changelog](https://keepachangelog.com/en/1.0.0/).
 - `RabbitMQAdapter` now has a configurable default prefetch of 50 messages
 - `RabbitMQAdapter` will now ask for messages in it's prefetch queue to be
   requeued upon shutdown
+- If a handler raises an exception and there is a DLQ configured, that message
+  will be put on the DLQ and the message will be acked
 
 ## [0.5.2] - 2020-09-30
 

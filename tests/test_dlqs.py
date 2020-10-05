@@ -6,6 +6,7 @@ from .matchers import always, never
 
 
 def test_no_dlq_required():
+    """Test the happy path where the DLQ is never used"""
     dlq: Dict = {}
 
     processor: m.Processor[m.RawMessage] = m.Processor()
@@ -30,6 +31,7 @@ def test_no_dlq_required():
 
 
 def test_no_matching_handler():
+    """Messages for which no handler matches should be written to the DLQ"""
     dlq: Dict = {}
 
     processor: m.Processor[m.RawMessage] = m.Processor()
