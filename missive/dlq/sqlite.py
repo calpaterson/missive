@@ -37,6 +37,8 @@ SELECT count(*) from messages
 
 class SQLiteDLQ(DLQ[M]):
     def __init__(self, connection_str: str):
+        # FIXME: Should have an option to emit whatever pragma is required for
+        # WAL mode
         self.connection_str = connection_str
         self.db_handle = sqlite3.connect(connection_str)
         self.db_handle.execute(SCHEMA)
