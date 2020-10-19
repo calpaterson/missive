@@ -1,4 +1,4 @@
-from typing import Any, Type, Sequence
+from typing import Any, Type, Sequence, MutableMapping
 from logging import getLogger
 from contextlib import ExitStack
 import socket
@@ -33,12 +33,16 @@ class RabbitMQAdapter(missive.Adapter[missive.M]):
         # Considered a reasonable default
         self.prefetch_count = 50
 
+        self._kombu_message_map: MutableMapping[bytes, Any] = {}
+
     def ack(self, message: missive.M) -> None:
-        self._current_kombu_message.ack()
+        kombu_message = self._kombu_message_map[message.message_id]
+        kombu_message.ack()
         logger.debug("acked %s", message)
 
     def nack(self, message: missive.M) -> None:
-        self._current_kombu_message.nack()
+        kombu_message = self._kombu_message_map[message.message_id]
+        kombu_message.nack()
         logger.warning("nacked %s", message)
 
     def _get_conn(self, url_or_conn: Any, stack: ExitStack) -> Any:
@@ -72,7 +76,7 @@ class RabbitMQAdapter(missive.Adapter[missive.M]):
 
             def callback(body: Any, kombu_message: Any) -> None:
                 message = self.message_cls(bytes(kombu_message.body))
-                self._current_kombu_message = kombu_message
+                self._kombu_message_map[message.message_id] = kombu_message
                 logger.debug(
                     "got message from rabbitmq: %s ", kombu_message,
                 )
