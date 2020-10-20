@@ -36,7 +36,7 @@ class StdinAdapter(Adapter[M]):
 
     def run(self) -> None:
         logger.info("started")
-        with self.processor.handling_context(self.message_cls, self) as ctx:
+        with self.processor.context(self.message_cls, self) as ctx:
             while not self.shutdown_handler.should_exit():
                 # FIXME: rewrite this to use selectors instead of low level select
                 select([self.filelike], [], [])

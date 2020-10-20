@@ -112,8 +112,8 @@ class TestAdapter(Adapter[M]):
         self.nacked.append(message)
 
     def send(self, message: M) -> None:
-        ctx: "HandlingContext[M]"
-        with self.processor.handling_context(type(message), self) as ctx:
+        ctx: "ProcessingContext[M]"
+        with self.processor.context(type(message), self) as ctx:
             ctx.handle(message)
 
 
@@ -121,10 +121,10 @@ DLQ = MutableMapping[bytes, Tuple[M, str]]
 
 Matcher = Callable[[M], bool]
 
-Handler = Callable[[M, "HandlingContext[M]"], None]
+Handler = Callable[[M, "ProcessingContext[M]"], None]
 
 
-class HandlingContext(Generic[M]):
+class ProcessingContext(Generic[M]):
     def __init__(
         self, message_cls: Type[M], adapter: Adapter[M], processor: "Processor[M]"
     ) -> None:
@@ -232,10 +232,10 @@ class Processor(Generic[M]):
         self.dlq = dlq
 
     @contextmanager
-    def handling_context(
+    def context(
         self, message_cls: Type[M], adapter: Adapter[M]
-    ) -> Iterator[HandlingContext[M]]:
-        yield HandlingContext(message_cls, adapter, self)
+    ) -> Iterator[ProcessingContext[M]]:
+        yield ProcessingContext(message_cls, adapter, self)
 
     def test_client(self) -> TestAdapter[M]:
         return TestAdapter(self)

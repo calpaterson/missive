@@ -71,7 +71,7 @@ class RabbitMQAdapter(missive.Adapter[missive.M]):
             consumer.qos(prefetch_count=self.prefetch_count)
 
             ctx = stack.enter_context(
-                self.processor.handling_context(self.message_cls, self)
+                self.processor.context(self.message_cls, self)
             )
 
             def callback(body: Any, kombu_message: Any) -> None:

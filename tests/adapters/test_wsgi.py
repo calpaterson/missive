@@ -12,7 +12,7 @@ def test_acking():
     message_received = None
 
     @processor.handle_for(always)
-    def flip_bit(message: m.RawMessage, ctx: m.HandlingContext[m.RawMessage]):
+    def flip_bit(message: m.RawMessage, ctx: m.ProcessingContext[m.RawMessage]):
         nonlocal message_received
         message_received = message
         ctx.ack(message)
@@ -33,7 +33,7 @@ def test_nacking():
     message_received = None
 
     @processor.handle_for(always)
-    def flip_bit(message: m.RawMessage, ctx: m.HandlingContext[m.RawMessage]):
+    def flip_bit(message: m.RawMessage, ctx: m.ProcessingContext[m.RawMessage]):
         nonlocal message_received
         message_received = message
         ctx.nack(message)

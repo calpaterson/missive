@@ -26,7 +26,7 @@ class WSGIAdapter(Adapter[M]):
         @self.app.route("/", methods=["POST"])
         def web_handler() -> Tuple[str, int]:
             message = self.message_cls(flask.request.data)
-            with processor.handling_context(self.message_cls, self) as ctx:
+            with processor.context(self.message_cls, self) as ctx:
                 ctx.handle(message)
                 if message in self.acked:
                     self.acked.remove(message)

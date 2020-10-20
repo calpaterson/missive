@@ -34,7 +34,7 @@ class RedisPubSubAdapter(missive.Adapter[missive.M]):
         pass
 
     def run(self) -> None:
-        with self.processor.handling_context(self.message_cls, self) as ctx:
+        with self.processor.context(self.message_cls, self) as ctx:
 
             def handler(message: Dict[Any, Any]) -> None:
                 logger.debug("got redis message: %s", message)
