@@ -36,12 +36,12 @@ class RabbitMQAdapter(missive.Adapter[missive.M]):
         self._kombu_message_map: MutableMapping[bytes, Any] = {}
 
     def ack(self, message: missive.M) -> None:
-        kombu_message = self._kombu_message_map[message.message_id]
+        kombu_message = self._kombu_message_map.pop(message.message_id)
         kombu_message.ack()
         logger.debug("acked %s", message)
 
     def nack(self, message: missive.M) -> None:
-        kombu_message = self._kombu_message_map[message.message_id]
+        kombu_message = self._kombu_message_map.pop(message.message_id)
         kombu_message.nack()
         logger.warning("nacked %s", message)
 
