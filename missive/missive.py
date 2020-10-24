@@ -2,7 +2,7 @@ import abc
 import json
 import uuid
 from dataclasses import dataclass
-from contextlib import contextmanager
+from contextlib import contextmanager, ExitStack, closing
 from logging import getLogger
 from typing import (
     MutableSequence,
@@ -107,6 +107,8 @@ class TestAdapter(Adapter[M]):
         self.processor = processor
         self.acked: List[M] = []
         self.nacked: List[M] = []
+        self.stack = ExitStack()
+        self.ctx: Optional[ProcessingContext[M]] = None
 
     def ack(self, message: M) -> None:
         self.acked.append(message)
@@ -115,12 +117,14 @@ class TestAdapter(Adapter[M]):
         self.nacked.append(message)
 
     def send(self, message: M) -> None:
-        ctx: "ProcessingContext[M]"
-        with self.processor.context(type(message), self) as ctx:
-            ctx.handle(message)
+        if self.ctx is None:
+            self.ctx = self.stack.enter_context(
+                self.processor.context(type(message), self)
+            )
+        self.ctx.handle(message)
 
     def close(self) -> None:
-        ...
+        self.stack.pop_all()
 
 
 DLQ = MutableMapping[bytes, Tuple[M, str]]
@@ -306,5 +310,7 @@ class Processor(Generic[M]):
             for hook in self.hooks.after_processing:
                 hook(processing_ctx)
 
-    def test_client(self) -> TestAdapter[M]:
-        return TestAdapter(self)
+    @contextmanager
+    def test_client(self) -> Iterator[TestAdapter[M]]:
+        with closing(TestAdapter(self)) as adapter:
+            yield adapter

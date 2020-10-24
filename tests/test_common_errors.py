@@ -15,10 +15,10 @@ def test_exception_raised_no_dlq():
     def crash(message, ctx):
         raise RuntimeError("bad bytes!")
 
-    test_client = proc.test_client()
-    blank_message = missive.RawMessage(b"")
-    with pytest.raises(RuntimeError):
-        test_client.send(blank_message)
+    with proc.test_client() as test_client:
+        blank_message = missive.RawMessage(b"")
+        with pytest.raises(RuntimeError):
+            test_client.send(blank_message)
 
 
 def test_exception_raised_with_a_dlq():
@@ -32,9 +32,9 @@ def test_exception_raised_with_a_dlq():
     def crash(message, ctx):
         raise RuntimeError("bad bytes!")
 
-    test_client = proc.test_client()
-    blank_message = missive.RawMessage(b"")
-    test_client.send(blank_message)
+    with proc.test_client() as test_client:
+        blank_message = missive.RawMessage(b"")
+        test_client.send(blank_message)
     assert dlq == {blank_message.message_id: (blank_message, "bad bytes!")}
     assert blank_message in test_client.acked
 

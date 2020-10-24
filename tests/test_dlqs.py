@@ -20,11 +20,9 @@ def test_no_dlq_required():
         flag = True
         ctx.ack()
 
-    test_client = processor.test_client()
-
-    blank_message = m.RawMessage(b"")
-
-    test_client.send(blank_message)
+    with processor.test_client() as test_client:
+        blank_message = m.RawMessage(b"")
+        test_client.send(blank_message)
 
     assert flag
     assert blank_message in test_client.acked
@@ -41,11 +39,9 @@ def test_no_matching_handler():
     def non_matching_handler(message, ctx):
         assert False
 
-    test_client = processor.test_client()
-
-    blank_message = m.RawMessage(b"")
-
-    test_client.send(blank_message)
+    with processor.test_client() as test_client:
+        blank_message = m.RawMessage(b"")
+        test_client.send(blank_message)
 
     assert blank_message in test_client.acked
     assert list(dlq.values()) == [(blank_message, "no matching handlers")]
@@ -65,11 +61,9 @@ def test_multiple_matching_handlers():
     def another_matching_handler(message, ctx):
         message.ack()
 
-    test_client = processor.test_client()
-
-    blank_message = m.RawMessage(b"")
-
-    test_client.send(blank_message)
+    with processor.test_client() as test_client:
+        blank_message = m.RawMessage(b"")
+        test_client.send(blank_message)
 
     assert blank_message in test_client.acked
     assert list(dlq.values()) == [(blank_message, "multiple matching handlers")]

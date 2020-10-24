@@ -15,10 +15,7 @@ def handle_as(message, ctx):
 
 
 def test_json():
-    tc = processor.test_client()
-
-    body = {"flag": "a"}
-
-    tc.send(missive.JSONMessage(json.dumps(body).encode("utf-8")))
-
-    assert db == [body]
+    with processor.test_client() as tc:
+        body = {"flag": "a"}
+        tc.send(missive.JSONMessage(json.dumps(body).encode("utf-8")))
+        assert db == [body]
