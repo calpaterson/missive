@@ -1,3 +1,5 @@
+from typing import Any
+
 import json
 
 import missive
@@ -35,6 +37,10 @@ class TypeMatcher:
     def __call__(self, message: missive.JSONMessage) -> bool:
         type_: str = message.get_json()["type"]
         return type_ == self.type_
+
+
+def to_json_message(o: Any) -> missive.JSONMessage:
+    return missive.JSONMessage(json.dumps(o).encode("utf-8"))
 
 
 def init_proc(pool) -> missive.Processor[missive.JSONMessage]:
@@ -106,16 +112,19 @@ def test_handler_exception():
     assert statuses == ["closed", "closed", "closed"]
 
 
-def test_crash_when_processing_hooks_raise():
+@pytest.mark.parametrize("hook_name", ["before_processing", "after_processing"])
+def test_crash_when_processing_hooks_raise(hook_name):
     """When a processing hook raises an exception, we should crash regardless
     of whether a DLQ is set or not as this is not related to a message and is
     probably unrecoverable.
 
     """
-    proc = init_proc([])
+    proc = init_proc([FakeConnection()])
 
-    @proc.before_processing
-    def raise_exc(p_ctx):
+    hook = getattr(proc, hook_name)
+
+    @hook
+    def raise_exc(p_ctx: missive.ProcessingContext):
         raise RuntimeError("something wrong in setup")
 
     with pytest.raises(RuntimeError):
@@ -123,8 +132,37 @@ def test_crash_when_processing_hooks_raise():
             tc.send(missive.JSONMessage(json.dumps({"type": "happy"}).encode("utf-8")))
 
 
-@pytest.mark.xfail(reason="not implemented")
-def test_dlq_used_when_handling_hooks_raise():
+@pytest.mark.parametrize("hook_name", ["before_handling", "after_handling"])
+def test_dlq_used_when_handling_hooks_raise(hook_name):
     """When a handling hook raises an exception, the message should follow the
     normal DLQ policy as it's probably a message specific error."""
-    assert False
+    proc = init_proc([FakeConnection()])
+    dlq: missive.DLQ = {}
+    proc.set_dlq(dlq)
+
+    hook = getattr(proc, hook_name)
+
+    @hook
+    def raise_exc_hook(p_ctx, h_ctx):
+        raise RuntimeError("bad bytes")
+
+    with proc.test_client() as tc:
+        tc.send(to_json_message({"type": "happy"}))
+
+    assert len(dlq) == 1
+
+
+@pytest.mark.parametrize("hook_name", ["before_handling", "after_handling"])
+def test_handling_hooks_exc_propagates_when_no_dlq(hook_name):
+    """When there's no DLQ, handling hook exceptions crash the processor"""
+    proc = init_proc([FakeConnection()])
+
+    hook = getattr(proc, hook_name)
+
+    @hook
+    def raise_exc_hook(p_ctx, h_ctx):
+        raise RuntimeError("bad bytes")
+
+    with proc.test_client() as tc:
+        with pytest.raises(RuntimeError):
+            tc.send(to_json_message({"type": "happy"}))

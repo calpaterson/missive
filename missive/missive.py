@@ -124,7 +124,7 @@ class TestAdapter(Adapter[M]):
         self.ctx.handle(message)
 
     def close(self) -> None:
-        self.stack.pop_all()
+        self.stack.close()
 
 
 DLQ = MutableMapping[bytes, Tuple[M, str]]
