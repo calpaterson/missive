@@ -5,6 +5,9 @@ This is the changelog for missive.
 The format is based on [Keep a
 Changelog](https://keepachangelog.com/en/1.0.0/).
 
+Please note that prior to version 1.0 Missive will make (considerable) backward
+incompatible changes as the API is fleshed out.
+
 ## Unreleased
 
 - Add a system of hooks and state
