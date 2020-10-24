@@ -218,12 +218,15 @@ class ProcessingContext(Generic[M]):
 
     @contextmanager
     def handling_context(self, message: M) -> Iterator["HandlingContext[M]"]:
+        """Enter the handling context, including calling hooks."""
         handling_context = HandlingContext(message, self)
         for hook in self.processor.hooks.before_handling:
             hook(self, handling_context)
-        yield handling_context
-        for hook in self.processor.hooks.after_handling:
-            hook(self, handling_context)
+        try:
+            yield handling_context
+        finally:
+            for hook in self.processor.hooks.after_handling:
+                hook(self, handling_context)
 
 
 class HandlingContext(Generic[M]):
@@ -291,12 +294,17 @@ class Processor(Generic[M]):
     def context(
         self, message_cls: Type[M], adapter: Adapter[M]
     ) -> Iterator[ProcessingContext[M]]:
+        """Enter the processing context, including calling hooks."""
         processing_ctx = ProcessingContext(message_cls, adapter, self)
         for hook in self.hooks.before_processing:
             hook(processing_ctx)
-        yield processing_ctx
-        for hook in self.hooks.after_processing:
-            hook(processing_ctx)
+        try:
+            yield processing_ctx
+        finally:
+            # Ensure that after hooks are still called in the case of an
+            # uncaught exception
+            for hook in self.hooks.after_processing:
+                hook(processing_ctx)
 
     def test_client(self) -> TestAdapter[M]:
         return TestAdapter(self)

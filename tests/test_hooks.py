@@ -2,7 +2,7 @@ import json
 
 import missive
 
-from .matchers import always
+import pytest
 
 
 class FakeConnection:
@@ -28,6 +28,15 @@ class FakeConnection:
         self.status = "closed"
 
 
+class TypeMatcher:
+    def __init__(self, type_: str):
+        self.type_ = type_
+
+    def __call__(self, message: missive.JSONMessage) -> bool:
+        type_: str = message.get_json()["type"]
+        return type_ == self.type_
+
+
 def init_proc(pool) -> missive.Processor[missive.JSONMessage]:
     proc: missive.Processor[missive.JSONMessage] = missive.Processor()
 
@@ -44,7 +53,7 @@ def init_proc(pool) -> missive.Processor[missive.JSONMessage]:
         handling_ctx.state.conn = proc_ctx.state.pool.pop()
         handling_ctx.state.conn.open()
 
-    @proc.handle_for(always)
+    @proc.handle_for(TypeMatcher("happy"))
     def happy_handler(
         message: missive.JSONMessage,
         handling_ctx: missive.HandlingContext[missive.JSONMessage],
@@ -70,7 +79,31 @@ def test_no_failures():
     proc = init_proc(pool)
     proc.test_client()
     tc = proc.test_client()
-    tc.send(missive.JSONMessage(json.dumps({}).encode("utf-8")))
+    tc.send(missive.JSONMessage(json.dumps({"type": "happy"}).encode("utf-8")))
+    tc.close()
+
+    statuses = [conn.status for conn in pool]
+    assert statuses == ["closed", "closed", "closed"]
+
+
+def test_handler_exception():
+    pool = [FakeConnection() for _ in range(3)]
+
+    proc = init_proc(pool)
+
+    @proc.handle_for(TypeMatcher("handler_exception"))
+    def problem_handler(m, ctx):
+        raise RuntimeError("something bad happened")
+
+    proc.test_client()
+    tc = proc.test_client()
+    with pytest.raises(RuntimeError):
+        tc.send(
+            missive.JSONMessage(
+                json.dumps({"type": "handler_exception"}).encode("utf-8")
+            )
+        )
+
     tc.close()
 
     statuses = [conn.status for conn in pool]
