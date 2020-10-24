@@ -85,7 +85,7 @@ def test_no_failures():
     proc = init_proc(pool)
     proc.test_client()
     with proc.test_client() as tc:
-        tc.send(missive.JSONMessage(json.dumps({"type": "happy"}).encode("utf-8")))
+        tc.send(to_json_message({"type": "happy"}))
 
     statuses = [conn.status for conn in pool]
     assert statuses == ["closed", "closed", "closed"]
@@ -102,11 +102,7 @@ def test_handler_exception():
 
     with proc.test_client() as tc:
         with pytest.raises(RuntimeError):
-            tc.send(
-                missive.JSONMessage(
-                    json.dumps({"type": "handler_exception"}).encode("utf-8")
-                )
-            )
+            tc.send(to_json_message({"type": "handler_exception"}))
 
     statuses = [conn.status for conn in pool]
     assert statuses == ["closed", "closed", "closed"]
@@ -129,7 +125,7 @@ def test_crash_when_processing_hooks_raise(hook_name):
 
     with pytest.raises(RuntimeError):
         with proc.test_client() as tc:
-            tc.send(missive.JSONMessage(json.dumps({"type": "happy"}).encode("utf-8")))
+            tc.send(to_json_message({"type": "happy"}))
 
 
 @pytest.mark.parametrize("hook_name", ["before_handling", "after_handling"])
