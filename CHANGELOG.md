@@ -7,6 +7,16 @@ Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+- Add a system of hooks and state
+  - There are hooks for when processing starts, stops and when handling of a
+    given message starts and stops
+  - The specific aim here is to allow for SQL connections and connection pools
+  - This changes a number of different call signatures across the codebase
+- Ack and nack messages specifically in the RabbitMQAdapter
+  - This fixes a bug where acks and nacks were getting mixed up due to async
+    magic happening inside pyamp (there can be multiple messages in flight)
+
+
 ## [0.6.0] - 2020-10-05
 
 - Change `Processor.handle_for` to take a single matcher instead of a sequence
