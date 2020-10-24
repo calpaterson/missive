@@ -34,6 +34,6 @@ def test_from_file():
     w_fl.write(b"\n")
     w_fl.flush()
 
-    thread.join()
+    thread.join(timeout=1)
 
     assert flag == test_event

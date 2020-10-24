@@ -11,10 +11,10 @@ def test_one_matching_handler():
     flag = False
 
     @processor.handle_for(always)
-    def flip_bit(message: m.RawMessage, ctx: m.ProcessingContext[m.RawMessage]) -> None:
+    def flip_bit(message: m.RawMessage, ctx: m.HandlingContext[m.RawMessage]) -> None:
         nonlocal flag
         flag = True
-        ctx.ack(message)
+        ctx.ack()
 
     test_client = processor.test_client()
 
@@ -73,7 +73,7 @@ def test_one_matching_handler_among_multiple():
     def a_matching_handler(message, ctx):
         nonlocal flag
         flag = True
-        ctx.ack(message)
+        ctx.ack()
 
     @processor.handle_for(never)
     def another_handler(message, ctx):

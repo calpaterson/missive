@@ -25,7 +25,7 @@ def test_message_receipt(redis_client):
     def catch_all(message, ctx):
         nonlocal flag
         flag = message.get_json()
-        ctx.ack(message)
+        ctx.ack()
         adapted.shutdown_handler.set_flag()
 
     adapted = RedisPubSubAdapter(missive.JSONMessage, processor, ["test-channel"])
@@ -34,13 +34,12 @@ def test_message_receipt(redis_client):
     thread.start()
 
     while adapted.thread is None:
-        time.sleep(0)
+        time.sleep(0.01)
 
     test_event = {"test-event": True}
 
     redis_client.publish("test-channel", json.dumps(test_event))
 
-    while adapted.thread.is_alive():
-        time.sleep(0)
+    adapted.thread.join(1)
 
     assert flag == test_event

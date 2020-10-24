@@ -54,7 +54,7 @@ def test_message_receipt(channel, random_queue):
     def catch_all(message, ctx):
         nonlocal flag
         flag = message.get_json()
-        ctx.ack(message)
+        ctx.ack()
         adapted.shutdown_handler.set_flag()
 
     adapted = RabbitMQAdapter(
@@ -74,7 +74,7 @@ def test_message_receipt(channel, random_queue):
 
     thread = threading.Thread(target=adapted.run)
     thread.start()
-    thread.join()
+    thread.join(1)
 
     assert flag == test_event
 
@@ -91,7 +91,7 @@ def test_passing_a_conn(channel, random_queue, connection):
     def catch_all(message, ctx):
         nonlocal flag
         flag = message.get_json()
-        ctx.ack(message)
+        ctx.ack()
         adapted.shutdown_handler.set_flag()
 
     adapted = RabbitMQAdapter(
@@ -111,7 +111,7 @@ def test_passing_a_conn(channel, random_queue, connection):
 
     thread = threading.Thread(target=adapted.run)
     thread.start()
-    thread.join()
+    thread.join(1)
 
     assert flag == test_event
 
@@ -128,7 +128,7 @@ def test_nack(channel, random_queue):
     def catch_all(message, ctx):
         nonlocal flag
         flag = message.get_json()
-        ctx.nack(message)
+        ctx.nack()
         adapted.shutdown_handler.set_flag()
 
     adapted = RabbitMQAdapter(
@@ -148,7 +148,7 @@ def test_nack(channel, random_queue):
 
     thread = threading.Thread(target=adapted.run)
     thread.start()
-    thread.join()
+    thread.join(1)
 
     assert flag == test_event
 
@@ -171,7 +171,7 @@ def test_receipt_from_multiple_queues(channel):
     @processor.handle_for(always)
     def catch_all(message, ctx):
         messages.add(message.get_json()["n"])
-        ctx.ack(message)
+        ctx.ack()
         if len(messages) >= 2:
             adapted.shutdown_handler.set_flag()
 
@@ -189,7 +189,7 @@ def test_receipt_from_multiple_queues(channel):
 
     thread = threading.Thread(target=adapted.run)
     thread.start()
-    thread.join()
+    thread.join(1)
 
     assert len(messages) == 2
 

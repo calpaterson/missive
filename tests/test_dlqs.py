@@ -15,10 +15,10 @@ def test_no_dlq_required():
     flag = False
 
     @processor.handle_for(always)
-    def flip_bit(message: m.RawMessage, ctx: m.ProcessingContext[m.RawMessage]) -> None:
+    def flip_bit(message: m.RawMessage, ctx: m.HandlingContext[m.RawMessage]) -> None:
         nonlocal flag
         flag = True
-        ctx.ack(message)
+        ctx.ack()
 
     test_client = processor.test_client()
 

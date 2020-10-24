@@ -70,9 +70,7 @@ class RabbitMQAdapter(missive.Adapter[missive.M]):
             # Limit the size of the prefetch queue
             consumer.qos(prefetch_count=self.prefetch_count)
 
-            ctx = stack.enter_context(
-                self.processor.context(self.message_cls, self)
-            )
+            ctx = stack.enter_context(self.processor.context(self.message_cls, self))
 
             def callback(body: Any, kombu_message: Any) -> None:
                 message = self.message_cls(bytes(kombu_message.body))

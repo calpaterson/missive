@@ -12,10 +12,10 @@ def test_acking():
     message_received = None
 
     @processor.handle_for(always)
-    def flip_bit(message: m.RawMessage, ctx: m.ProcessingContext[m.RawMessage]):
+    def flip_bit(message: m.RawMessage, ctx: m.HandlingContext[m.RawMessage]):
         nonlocal message_received
         message_received = message
-        ctx.ack(message)
+        ctx.ack()
 
     adapted_processor = WSGIAdapter(m.RawMessage, processor)
 
@@ -33,10 +33,10 @@ def test_nacking():
     message_received = None
 
     @processor.handle_for(always)
-    def flip_bit(message: m.RawMessage, ctx: m.ProcessingContext[m.RawMessage]):
+    def flip_bit(message: m.RawMessage, ctx: m.HandlingContext[m.RawMessage]):
         nonlocal message_received
         message_received = message
-        ctx.nack(message)
+        ctx.nack()
 
     adapted_processor = WSGIAdapter(m.RawMessage, processor)
 

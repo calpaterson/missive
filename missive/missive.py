@@ -1,9 +1,11 @@
 import abc
 import json
 import uuid
+from dataclasses import dataclass
 from contextlib import contextmanager
 from logging import getLogger
 from typing import (
+    MutableSequence,
     Callable,
     MutableMapping,
     Optional,
@@ -18,6 +20,8 @@ from typing import (
 )
 
 logger = getLogger("missive")
+
+from .state import State
 
 
 class Message(metaclass=abc.ABCMeta):
@@ -93,7 +97,6 @@ class Adapter(Generic[M], metaclass=abc.ABCMeta):
         :param message: The message object to be acknowledged.
 
         """
-        ...
 
 
 class TestAdapter(Adapter[M]):
@@ -116,18 +119,22 @@ class TestAdapter(Adapter[M]):
         with self.processor.context(type(message), self) as ctx:
             ctx.handle(message)
 
+    def close(self) -> None:
+        ...
+
 
 DLQ = MutableMapping[bytes, Tuple[M, str]]
 
 Matcher = Callable[[M], bool]
 
-Handler = Callable[[M, "ProcessingContext[M]"], None]
+Handler = Callable[[M, "HandlingContext[M]"], None]
 
 
 class ProcessingContext(Generic[M]):
     def __init__(
         self, message_cls: Type[M], adapter: Adapter[M], processor: "Processor[M]"
     ) -> None:
+        self.state = State()
         self.message_cls = message_cls
         self.adapter = adapter
         self.processor = processor
@@ -185,7 +192,8 @@ class ProcessingContext(Generic[M]):
         (sole_matching_handler,) = matching_handlers
         logger.debug("calling %s", sole_matching_handler)
         try:
-            sole_matching_handler(message, self)
+            with self.handling_context(message) as handling_context:
+                sole_matching_handler(message, handling_context)
         except Exception as e:
             if self.processor.dlq is not None:
                 reason = str(e)
@@ -208,12 +216,48 @@ class ProcessingContext(Generic[M]):
                 )
                 raise
 
+    @contextmanager
+    def handling_context(self, message: M) -> Iterator["HandlingContext[M]"]:
+        handling_context = HandlingContext(message, self)
+        for hook in self.processor.hooks.before_handling:
+            hook(self, handling_context)
+        yield handling_context
+        for hook in self.processor.hooks.after_handling:
+            hook(self, handling_context)
+
+
+class HandlingContext(Generic[M]):
+    def __init__(self, message: M, processing_ctx: ProcessingContext[M]) -> None:
+        self.state = State()
+        self.message = message
+        self.processing_ctx = processing_ctx
+
+    def ack(self) -> None:
+        self.processing_ctx.ack(self.message)
+
+    def nack(self) -> None:
+        self.processing_ctx.nack(self.message)
+
+
+ProcessingHook = Callable[[ProcessingContext[M]], None]
+
+HandlingHook = Callable[[ProcessingContext[M], HandlingContext[M]], None]
+
+
+@dataclass
+class ProcessorHooks(Generic[M]):
+    before_processing: MutableSequence[ProcessingHook[M]]
+    after_processing: MutableSequence[ProcessingHook[M]]
+    before_handling: MutableSequence[HandlingHook[M]]
+    after_handling: MutableSequence[HandlingHook[M]]
+
 
 class Processor(Generic[M]):
     def __init__(self) -> None:
         self.matchers: Set[Matcher[M]] = set()
         self.handlers: MutableMapping[Tuple[Matcher[M], Handler[M]], None] = {}
         self.dlq: Optional[DLQ[M]] = None
+        self.hooks: ProcessorHooks[M] = ProcessorHooks([], [], [], [])
 
     def handle_for(self, matcher: Matcher[M]) -> Callable[[Handler[M]], None]:
         def wrapper(fn: Handler[M]) -> None:
@@ -228,6 +272,18 @@ class Processor(Generic[M]):
 
         return wrapper
 
+    def before_processing(self, hook: ProcessingHook[M]) -> None:
+        self.hooks.before_processing.append(hook)
+
+    def after_processing(self, hook: ProcessingHook[M]) -> None:
+        self.hooks.after_processing.append(hook)
+
+    def before_handling(self, hook: HandlingHook[M]) -> None:
+        self.hooks.before_handling.append(hook)
+
+    def after_handling(self, hook: HandlingHook[M]) -> None:
+        self.hooks.after_handling.append(hook)
+
     def set_dlq(self, dlq: DLQ[M]) -> None:
         self.dlq = dlq
 
@@ -235,7 +291,12 @@ class Processor(Generic[M]):
     def context(
         self, message_cls: Type[M], adapter: Adapter[M]
     ) -> Iterator[ProcessingContext[M]]:
-        yield ProcessingContext(message_cls, adapter, self)
+        processing_ctx = ProcessingContext(message_cls, adapter, self)
+        for hook in self.hooks.before_processing:
+            hook(processing_ctx)
+        yield processing_ctx
+        for hook in self.hooks.after_processing:
+            hook(processing_ctx)
 
     def test_client(self) -> TestAdapter[M]:
         return TestAdapter(self)
