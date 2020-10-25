@@ -97,4 +97,3 @@ class RabbitMQAdapter(missive.Adapter[missive.M]):
 
             # Return all messages in the prefetch queue
             consumer.recover(requeue=True)
-        logger.info("closed connection")
