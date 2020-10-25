@@ -19,7 +19,7 @@ A simple example
     @processor.handle_for(lambda m: m.raw_data == b"Hello")
     def greet(message, ctx):
         print("Hello whoever you are")
-        ctx.ack(message)
+        ctx.ack()
 
     stdin_processor = StdinAdapter(missive.RawMessage, processor)
 
@@ -93,6 +93,39 @@ by applying a type to your processor:
     # All handlers for this message will be typechecked against JSONMessage
     json_processor: missive.Processor[missive.JSONMessage] = missive.Processor()
 
+Hooks
+-----
+
+You can register hooks to run at certain times:
+
+1. `before_processing` - at startup
+2. `after_processing` - at shutdown
+3. `before_handling` - before each message
+4. `after_handling` - after each message
+
+Here's an example that logs the time taken to handle each message
+
+.. code-block:: python
+
+    from logging import getLogger
+
+    proc = missive.Processor()
+
+    logger = getLogger(__name__)
+
+    @proc.handle_for(...)
+    def some_handler(message, ctx):
+        ...
+
+    @proc.before_handling
+    def record_start_time(processing_ctx, handling_ctx):
+        handling_ctx.state.start_time = datetime.utcnow()
+
+    @proc.after_handling
+    def print_end_time(processing_ctx, handling_ctx):
+        logger.debug("took %s", datetime.utcnow() - handling_ctx.state.start_time)
+
+
 Pluggable adapters
 ------------------
 
@@ -123,7 +156,6 @@ the abstract `Adapter` class.
     uwsgi).  This can be a handy way to provide a web API for message senders
     than for whatever reason can't or don't want to connect to your message
     bus.
-
 
 Testing
 -------

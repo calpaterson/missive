@@ -9,18 +9,18 @@ It's best explained with some sample code:
 ```python
 import missive
 
-processor = missive.Processor()
+proc = missive.Processor()
 
-@processor.handle_for(lambda message: True)
-def hello_world(message: missive.Message) -> None:
+@proc.handle_for(lambda message: True)  # match all messages
+def hello_world(message: missive.Message, context: missive.HandlingContext) -> None:
     """Print 'Hello, World!' to stdin for each message"""
     print("Hello, World!")
-    message.ack()
+    context.ack()  # acknowledge the message (a bit redundant for stdin)
 
-adapted_processor = missive.adapters.StdinAdapter(processor)
+adapted_proc = missive.adapters.StdinAdapter(proc)
 
 if __name__ == "__main__":
-    adapted_processor.run()
+    adapted_proc.run()
 ```
 
 **Please note this is all alpha level code**
