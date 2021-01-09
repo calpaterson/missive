@@ -208,6 +208,7 @@ class ProcessingContext(Generic[M]):
                     sole_matching_handler,
                     e,
                     message,
+                    exc_info=True,
                 )
                 self.ack(message)
             else:
@@ -217,6 +218,7 @@ class ProcessingContext(Generic[M]):
                     sole_matching_handler,
                     e,
                     message,
+                    exc_info=True,
                 )
                 raise
 
