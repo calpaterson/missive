@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Callable, Optional
 import threading
 from logging import getLogger
 import signal
@@ -7,8 +7,9 @@ logger = getLogger(__name__)
 
 
 class ShutdownHandler:
-    def __init__(self) -> None:
+    def __init__(self, callback: Optional[Callable[[int], None]] = None) -> None:
         self.flag = threading.Event()
+        self.callback = callback
 
     def enable(self) -> None:
         signal.signal(signal.SIGINT, self.signal_handler)
@@ -19,6 +20,8 @@ class ShutdownHandler:
 
     def signal_handler(self, signal: int, frame: Any) -> None:
         logger.info("got signal %d, %s", signal, frame)
+        if self.callback is not None:
+            self.callback(signal)
         self.set_flag()
 
     def set_flag(self) -> None:

@@ -1,4 +1,5 @@
 import signal
+from unittest.mock import Mock
 
 import pytest
 
@@ -25,3 +26,17 @@ def test_signal_handling(sig):
     sh.enable()
     signal.getsignal(sig)(sig, None)  # type: ignore
     assert sh.should_exit()
+
+
+@pytest.mark.parametrize("sig", (signal.SIGINT, signal.SIGTERM))
+def test_callback(sig):
+    called_with = None
+
+    def cb(sig):
+        nonlocal called_with
+        called_with = sig
+
+    sh = ShutdownHandler(callback=cb)
+    sh.enable()
+    signal.getsignal(sig)(sig, None)  # type: ignore
+    assert called_with == sig
