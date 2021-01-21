@@ -58,13 +58,13 @@ Goals:
     ambigious, unknown, etc) can be filed away for later manual inspection and
     replay.  DLQs will be pluggable
 
-6. A method for retrying transient failures (**MISSING**)
+6. A method for retrying transient failures (**NO LONGER PLANNED**)
 
     DLQs often get filled with transient failures that need periodic retry.
     Some of of mechanism is needed for periodic retry.  Generic "middleware"
     approaches to be avoided if possible
 
-7. A rich library of matchers (**MISSING**)
+7. A rich library of matchers (**NO LONGER PLANNED**)
 
     Matchers can be callables but it would be nice to have better building
     blocks in the form of proper class instances (that also have `__call__`
