@@ -31,7 +31,7 @@ class RabbitMQAdapter(missive.Adapter[missive.M]):
         self.drain_timeout = drain_timeout
 
         # Considered a reasonable default
-        self.prefetch_count = 50
+        self.prefetch_count = 5
 
         self._kombu_message_map: MutableMapping[bytes, Any] = {}
 
@@ -85,9 +85,10 @@ class RabbitMQAdapter(missive.Adapter[missive.M]):
             # Enter the consumer's context ONLY after registering callbacks
             stack.enter_context(consumer)
 
-            logger.debug("consuming from %s", queues)
-
             drain_timeout = self.drain_timeout
+            logger.debug("consuming from %s", queues)
+            consumer.consume()
+
             while not self.shutdown_handler.should_exit():
                 try:
                     conn.drain_events(timeout=drain_timeout)
@@ -95,5 +96,5 @@ class RabbitMQAdapter(missive.Adapter[missive.M]):
                     # when the timeout is hit this exception is raised
                     pass
 
-            # Return all messages in the prefetch queue
-            consumer.recover(requeue=True)
+            logger.info("cancelling consumer")
+            consumer.cancel()
