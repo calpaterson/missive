@@ -8,7 +8,16 @@ Changelog](https://keepachangelog.com/en/1.0.0/).
 Please note that prior to version 1.0 Missive will make (considerable) backward
 incompatible changes as the API is fleshed out.
 
-## Unreleased
+## [0.8.1] - 2021-01-25
+
+- Improve logging
+  - Don't claim we've closed the RabbitMQ connection
+  - Log full exception tracebacks for unhandled exceptions, to make debugging easier
+- Fix issue where RabbitMQ adapter would not exit until queue drained
+  - Reduce default prefetch from 50 to 5
+  - Interact with Kombu slightly better
+
+## [0.8.0] - 2020-10-25
 
 - Add a system of hooks and state
   - There are hooks for when processing starts, stops and when handling of a
